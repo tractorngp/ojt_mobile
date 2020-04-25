@@ -1,8 +1,39 @@
 import 'package:flutter/material.dart';
-import 'package:ojt_app/pages/landing_page.dart';
+import 'package:ojt_app/pages/login.dart';
 import 'package:ojt_app/Routes.dart';
 
-void main() => runApp(MyApp());
+import 'package:firebase_core/firebase_core.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:io' show Platform;
+
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  if(Platform.isIOS){
+    await FirebaseApp.configure(
+      name: 'TractorPG',
+      options: const FirebaseOptions(
+        googleAppID: '1:240306423405:ios:2023751a726d77a63c2164',
+        gcmSenderID: '240306423405',
+        apiKey: 'AIzaSyBk-Cbd3GoNDBptjZnknxYaUaOnTJ74DiQ',
+        projectID: 'ojtappl',
+      ),
+    );
+  }
+  else{
+    await FirebaseApp.configure(
+      name: 'TractorPG',
+      options: const FirebaseOptions(
+        googleAppID: '1:240306423405:android:9ddf06112c9c31da3c2164',
+        gcmSenderID: '240306423405',
+        apiKey: 'AIzaSyBk-Cbd3GoNDBptjZnknxYaUaOnTJ74DiQ',
+        projectID: 'ojtappl',
+      ),
+    );
+  }
+  
+  runApp(MyApp());
+}
 
 class MyApp extends StatelessWidget {
   // This widget is the root of your application.
@@ -22,7 +53,7 @@ class MyApp extends StatelessWidget {
         // is not restarted.
         primarySwatch: Colors.blue,
       ),
-      home: LandingPage(),
+      home: LoginPage('user'),
       routes: Routes().routes,
     );
   }

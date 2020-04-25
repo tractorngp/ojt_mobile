@@ -8,6 +8,10 @@ import 'package:ojt_app/components/all_ojts_card.dart';
 import 'package:ojt_app/models/ojt_model.dart';
 import 'package:ojt_app/components/bottom_navigation_bar.dart';
 import 'package:ojt_app/pages/take_ojt.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:ojt_app/models/user_model.dart';
+import 'dart:convert';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class UserHomePage extends StatefulWidget {
   final String loginType;
@@ -24,6 +28,7 @@ class UserHomePageState extends State<UserHomePage> with SingleTickerProviderSta
   final _scaffoldKey = new GlobalKey<ScaffoldState>();
   Size screenSize;
   String loginType;
+  UserModel user;
   ScrollController scrollController = new ScrollController();
   BuildContext _loadingContext;
   TabController _tabController;
@@ -38,9 +43,12 @@ class UserHomePageState extends State<UserHomePage> with SingleTickerProviderSta
   var isDataLoading;
   bool partialLoad = false;
   var nor = 10, pageIndexGlobal = 0;
+  final Firestore firestore = Firestore.instance;
 
-  void initState() {
+  @override
+  initState(){
     super.initState();
+    initTheView();
     _tabController = new TabController(vsync: this, length: 2, initialIndex: _currentIndex);
     loadMoreDone = true;
     isDataLoading = false;
@@ -116,12 +124,29 @@ class UserHomePageState extends State<UserHomePage> with SingleTickerProviderSta
     this.getData();
   }
 
+  initTheView() async{
+    await getUser();
+    fetchOJTsData();
+  }
+
   UserHomePageState(loginType);
 
   @override
   void dispose() {
     _tabController.dispose();
     super.dispose();
+  }
+
+  fetchOJTsData() async{
+    var ojts = firestore.collection('assigned_ojts').where('active', isEqualTo: true).limit(nor).getDocuments();
+    print(ojts);
+  }
+
+  Future<Null> getUser() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    var userString = prefs.getString("user");
+    var val = json.decode(userString);
+    user = UserModel.map(val);
   }
 
   Future<Null> getData() async{

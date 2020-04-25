@@ -43,13 +43,13 @@ class _RatingChoicePageState extends State<RatingChoiceComponent> {
                       onTap: () {
                         setState(() {
                           widget.answers[index] = !widget.answers[index];
-                          if(widget.answers[index] == true){
-                            for(var k=0;k<widget.answers.length;k++){
-                              if(k != index){
-                                widget.answers[k] = false;
-                              }
-                            }
-                          }
+                          // if(widget.answers[index] == true){
+                          //   for(var k=0;k<widget.answers.length;k++){
+                          //     if(k != index){
+                          //       widget.answers[k] = false;
+                          //     }
+                          //   }
+                          // }
                           print(widget.answers);
                         });
                       },
@@ -78,13 +78,13 @@ class _RatingChoicePageState extends State<RatingChoiceComponent> {
                               onTap: (){
                                 setState(() {
                                   widget.answers[index] = !widget.answers[index];
-                                  if(widget.answers[index] == true){
-                                    for(var k=0;k<widget.answers.length;k++){
-                                      if(k != index){
-                                        widget.answers[k] = false;
-                                      }
-                                    }
-                                  }
+                                  // if(widget.answers[index] == true){
+                                  //   for(var k=0;k<widget.answers.length;k++){
+                                  //     if(k != index){
+                                  //       widget.answers[k] = false;
+                                  //     }
+                                  //   }
+                                  // }
                                   print(widget.answers);
                                 });
                               }

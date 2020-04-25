@@ -61,10 +61,14 @@ class _TakeOJTsPageState extends State<TakeOJTsPage>{
     List<dynamic> optionsArr = [];
     var assessmentQsCopy = json.decode(json.encode(assessmentQs));
     for(var i=0;i<assessmentQsCopy.length;i++){
-      var index = assessmentQsCopy[i]['answers'].indexOf(true);
-      optionsArr =  assessmentQsCopy[i]['options'];
-      if(index >=0){
-        assessmentQsCopy[i]['answer_value'] = optionsArr[index];
+      var answersArray = [];
+      for(var k=0;k<assessmentQsCopy[i]['answers'].length;k++){
+        if(assessmentQsCopy[i]['answers'][k] == true){
+          answersArray.add(assessmentQsCopy[i]['options'][k]);
+        }
+      }
+      if(answersArray != null && answersArray.length >0){
+        assessmentQsCopy[i]['answer_values'] = answersArray;
       }
       else{
         _showSnackBar("Please answer all questions!");
@@ -208,10 +212,11 @@ class _TakeOJTsPageState extends State<TakeOJTsPage>{
         itemCount: (assessmentQs.length + 2),
         pagination: new SwiperPagination(
           builder: const DotSwiperPaginationBuilder(
-            size: 10.0, activeSize: 10.0, space: 5.0, color: Color(0xFFE0E0E0))
+            size: 10.0, activeSize: 10.0, space: 5.0, color: Color(0xFFE0E0E0), activeColor: Color.fromRGBO(110, 120, 132, 1.0))
           ),
           control: new SwiperControl(
-            padding: EdgeInsets.only(top: screenSize.height - (screenSize.height*0.4))  
+            padding: EdgeInsets.only(top: screenSize.height - (screenSize.height*0.4)),
+            color: darkGrey  
           ),
           loop: true,
         
@@ -233,7 +238,7 @@ class _TakeOJTsPageState extends State<TakeOJTsPage>{
                   children: <Widget>[
                     Container(
                       width: screenSize.width * 0.85,
-                      height: screenSize.height * 0.75,
+                      height: screenSize.height * 0.65,
                       child: new GestureDetector( 
                         onTap: () {
                           print("Here I'm! dialog") ;
@@ -281,7 +286,7 @@ class _TakeOJTsPageState extends State<TakeOJTsPage>{
                   child: SizedBox.expand(
                     child:  PhotoViewGallery.builder(
                       scrollPhysics: const BouncingScrollPhysics(),
-                      builder: (BuildContext context, int index) {
+                      builder: (BuildContext context, int photoIndex) {
                           return PhotoViewGalleryPageOptions(
                               imageProvider: AssetImage('assets/' + images[index]),
                               initialScale: PhotoViewComputedScale.contained * 1.0,
@@ -303,20 +308,19 @@ class _TakeOJTsPageState extends State<TakeOJTsPage>{
                     )
                   ),
                 ),
-                Expanded(
-                  flex: 1,
-                  child: SizedBox.expand(
-                    child: RaisedButton(
-                      color: Colors.blue[900],
-                      child: Text(
-                        "Dismiss",
-                        style: TextStyle(fontSize: 20.0),
-                      ),
-                      textColor: Colors.white,
-                      onPressed: () => Navigator.pop(context),
+                Container(
+                  width: screenSize.width,
+                  height: screenSize.height * 0.1,
+                  child: RaisedButton(
+                    color: Colors.blue[900],
+                    child: Text(
+                      "Dismiss",
+                      style: TextStyle(fontSize: 20.0),
                     ),
-                  ),
-                ),
+                    textColor: Colors.white,
+                    onPressed: () => Navigator.pop(context),
+                  )
+                )
               ],
             ),
           );

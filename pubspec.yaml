@@ -29,6 +29,9 @@ dependencies:
   shared_preferences: ^0.5.1+2
   flutter_swiper: ^1.1.6
   photo_view: ^0.9.2
+  cloud_firestore: ^0.13.5
+  dbcrypt: ^1.0.0
+  device_id: ^0.2.0
 
 dev_dependencies:
   flutter_test:

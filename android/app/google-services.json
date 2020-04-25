@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "240306423405",
+    "firebase_url": "https://ojtappl.firebaseio.com",
+    "project_id": "ojtappl",
+    "storage_bucket": "ojtappl.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:240306423405:android:9ddf06112c9c31da3c2164",
+        "android_client_info": {
+          "package_name": "com.tractorpg.ojt_app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "240306423405-mk60jk2n11h2f18ar1quhknmi1faft65.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBdMotVyQqnx4ir5govYN5xtmMrP0nZmqc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "240306423405-mk60jk2n11h2f18ar1quhknmi1faft65.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

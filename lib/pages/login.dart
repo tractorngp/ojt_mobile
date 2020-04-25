@@ -6,9 +6,16 @@ import 'package:ojt_app/style/style.dart';
 import 'package:ojt_app/components/TextFields/inputField.dart';
 import 'package:ojt_app/components/Buttons/textButton.dart';
 import 'package:ojt_app/pages/user_home.dart';
-import 'package:ojt_app/pages/admin_home.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:flutter/services.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:dbcrypt/dbcrypt.dart';
+import 'package:ojt_app/services/constants.dart' as Constants;
+import 'package:device_id/device_id.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:ojt_app/models/user_model.dart';
+import 'dart:convert';
 
 class LoginPage extends StatefulWidget {
   final String loginType;
@@ -32,12 +39,38 @@ class LoginPageState extends State<LoginPage>
   String deviceToken;
   String devicePlatform;
   TextEditingController idCtrl;
+  TextEditingController pwdCtrl;
   bool autovalidate = false;
+  String _deviceid = 'Unknown';
+  UserModel user;
 
   BuildContext _loadingContext;
+  final Firestore firestore = Firestore.instance;
 
-  void initState() {
+  @override
+  initState() {
     super.initState();
+    idCtrl = new TextEditingController();
+    pwdCtrl = new TextEditingController();
+    initDeviceId();
+  }
+
+  Future<void> initDeviceId() async {
+    String deviceid;
+    String imei;
+    String meid;
+
+    deviceid = await DeviceId.getID;
+    try {
+      imei = await DeviceId.getIMEI;
+      meid = await DeviceId.getMEID;
+    } on PlatformException catch (e) {
+      print(e.message);
+    }
+
+    if (!mounted) return;
+
+    _deviceid = deviceid;
   }
 
   LoginPageState(loginType);
@@ -60,39 +93,6 @@ class LoginPageState extends State<LoginPage>
     return Scaffold(
       key: _scaffoldKey,
         floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-        appBar: new AppBar(
-          title: Container(
-            height: MediaQuery.of(context).size.height * 0.04,
-            child: FittedBox(
-              fit: BoxFit.contain,
-              child: Text((widget.loginType == 'admin' ? "Admin Login" : "User Login"), style: termsStyle, textAlign: TextAlign.center),
-            )
-          ),
-          leading: new Container(
-            height: MediaQuery.of(context).size.height * 0.04,
-            width: 25.0,
-            child: new Stack(
-              alignment: AlignmentDirectional.center,
-              children: <Widget>[
-                new FlatButton(
-                    onPressed: (){
-                      Navigator.pop(
-                        context
-                      );
-                    },
-                    child: new Icon(Icons.arrow_back_ios),
-                )
-              ],
-            ),
-          ),
-          centerTitle: true,
-          textTheme: TextTheme(
-          title: pageTitleStyle),
-          backgroundColor: appBarColor,
-          iconTheme: IconThemeData(
-            color: darkGrey,
-          ),
-        ),
         backgroundColor: whiteColor,
          body:  new SafeArea(
           top: false,
@@ -133,10 +133,23 @@ class LoginPageState extends State<LoginPage>
                             crossAxisAlignment: CrossAxisAlignment.start,
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: <Widget>[
-                              
-                            new Row(children: <Widget>[
-                              new Text((widget.loginType == 'admin' ? "Admin Login" : "User Login"), style: signinTitleStyle),
-                            ])
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.center,
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              children: <Widget>[
+                                Container(
+                                  padding: EdgeInsets.only(right: 10.0),
+                                  child: new Image.asset(
+                                    'assets/tractor.png',
+                                    height: 80.0,
+                                    width: 80.0,
+                                    fit: BoxFit.contain,
+                                  ),
+                                ),
+                                Text((widget.loginType == 'admin' ? "Admin Login" : "Login"), style: signinTitleStyle)
+                              ]
+                          ),
+                          
 
                         ]))
 
@@ -159,7 +172,7 @@ class LoginPageState extends State<LoginPage>
                               mainAxisAlignment: MainAxisAlignment.start,
                               children: <Widget>[
                                 new InputField(
-                                  hintText: "ID",
+                                  hintText: "Token ID",
                                   obscureText: false,
                                   textInputType: TextInputType.text,
                                   controller: idCtrl,
@@ -167,22 +180,20 @@ class LoginPageState extends State<LoginPage>
                                   hintStyle: placeholderStyle,
                                   textFieldColor: whiteColor,
                                   bottomMargin: 0.0,
-                                  validateFunction: validations.validateEmail,
-                                  // initValue: "",
-                                  // onSaved: (String email) {}),
-                                  onSaved: (val) => _username = val),
+                                  validateFunction: validations.validateEmail
+                                  ),
                                 new InputField(
                                     hintText: "Password",
                                     obscureText: true,
                                     textInputType: TextInputType.text,
+                                    controller: pwdCtrl,
                                     textStyle: textStyle,
                                     hintStyle: placeholderStyle,
                                     textFieldColor: whiteColor,
                                     bottomMargin: 10.0,
                                     validateFunction:
                                         validations.validatePassword,
-                                    initValue: "",
-                                    onSaved: (val) => _password = val),
+                                    ),
                                 
                                   Container(
                                     padding: EdgeInsets.all(20.0),
@@ -210,7 +221,6 @@ class LoginPageState extends State<LoginPage>
                   ],
                 ),
             ))));
-          
   }
 
   _onPressed() {
@@ -223,6 +233,27 @@ class LoginPageState extends State<LoginPage>
     showDialog(context: context, builder: (_) => dialog);
   }
 
+  void showLoader(){
+    if(_loadingContext != null){
+      dismissLoader();
+    }
+    showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) {
+        _loadingContext = context;
+        return Center(
+          child: SpinKitHourGlass(color: whiteColor)
+        );
+    });
+  }
+
+  void dismissLoader(){
+    if(_loadingContext != null)
+    Navigator.pop(_loadingContext);
+    _loadingContext = null;
+  }
+
   onPressed(String routeName) {
     Navigator.of(context).pushNamed(routeName);
   }
@@ -232,43 +263,69 @@ class LoginPageState extends State<LoginPage>
         .showSnackBar(new SnackBar(content: new Text(text)));
   }
 
-
-  void _submit() async{
-    final form = formKey.currentState;
-
-    if(widget.loginType == 'admin'){
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          settings: RouteSettings(name: "/adminHome"),
-          builder: (context) => AdminHomePage(widget.loginType)
-        ),
-      );
-    }
-    else{
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          settings: RouteSettings(name: "/userHome"),
-          builder: (context) => UserHomePage(widget.loginType)
-        ),
-    );
-    }
-
-    
-     
-    // if (form.validate()) {
-    //   showDialog(
-    //       barrierDismissible: false,
-    //       context: context,
-    //       builder: (BuildContext context) {
-    //       _loadingContext = context;
-    //       return Center(
-    //         child: SpinKitHourGlass(color: whiteColor)
-    //       );
-    //   });
-              
-    //   form.save();
-    // }
+  Future<Null> storeUser() async {
+    print("Homepage store user");
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    var userMap = user.toMap();
+    var userString = json.encode(userMap);
+    prefs.setString("user", userString);
+    print("Login store done");
   }
+
+
+  void _submit(){
+    showLoader();
+    _username = idCtrl.text;
+    _password = pwdCtrl.text;
+    print("Salt: " + Constants.SALT);
+    DocumentReference documentReference = Firestore.instance.collection("users").document(_username);
+    documentReference.get().then((datasnapshot) {
+      if (datasnapshot.exists) {
+        print(datasnapshot.data['name'].toString());
+        var passHash = datasnapshot.data['hpw'];
+        var passwordsMatch = DBCrypt().checkpw(_password, passHash);
+        var checkIfDeviceRegistered = (datasnapshot.data['deviceToken'] != null ? ((datasnapshot.data['deviceToken'].toString() == _deviceid.toString()) ? false : true) : false);
+        print(passwordsMatch);
+        dismissLoader();
+        if(passwordsMatch && !checkIfDeviceRegistered){
+          if(datasnapshot.data['role'].toString() != "user"){
+            _showSnackBar("Not authorized to login.");
+          }
+          else if(datasnapshot.data['active'] != null && datasnapshot.data['active'] == false){
+            _showSnackBar("User deactivated. Please contact admin.");
+          }
+          else{
+            user = UserModel.map(datasnapshot.data);
+            Firestore.instance.runTransaction((Transaction tx) async {
+              await storeUser();
+              await tx.update(documentReference, <String, dynamic>{'deviceToken': _deviceid});
+              setState(() {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    settings: RouteSettings(name: "/userHome"),
+                    builder: (context) => UserHomePage(widget.loginType)
+                  ),
+                );
+              });
+            });
+          }
+        }
+        else if(checkIfDeviceRegistered == true){
+          print("There is another device registered with the user. Please contact admin.");
+          _showSnackBar("There is another device registered with the user. Please contact admin.");
+        }
+        else{
+          print("Invalid password");
+          _showSnackBar("Invalid password");
+        }
+      }
+      else{
+        dismissLoader();
+        print("No such user");
+        _showSnackBar("Invalid user");
+      }
+    });
+  }
+
 }

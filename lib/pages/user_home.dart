@@ -279,14 +279,44 @@ class UserHomePageState extends State<UserHomePage> with SingleTickerProviderSta
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: <Widget>[
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      crossAxisAlignment: CrossAxisAlignment.end,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: <Widget>[
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: <Widget>[
+                            Container(
+                              padding: EdgeInsets.only(left: 20.0),
+                              child: new Image.asset(
+                                'assets/tractor.png',
+                                height: 60.0,
+                                width: 60.0,
+                                fit: BoxFit.contain,
+                              ),
+                            )
+                          ]
+                        ),
+                        Container(
+                          padding: EdgeInsets.only(right: 30.0),
+                          child: new Image.asset(
+                            'assets/full_logo.png',
+                            height: 50.0,
+                            width: 150.0,
+                            fit: BoxFit.contain,
+                          ),
+                        )
+                      ],
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
                         Container(
                           width: screenSize.width / 1.5,
                           padding: EdgeInsets.all(5.0),
-                          margin: EdgeInsets.only(right: 20.0, bottom: 30.0),
-                          child: Text((widget.loginType == 'admin' ? "Admin: " : "User: ") + (user != null ? _username : ""), style: textStyle, maxLines: 3, softWrap: true, textAlign: TextAlign.end)
+                          margin: EdgeInsets.only(left: 20.0, bottom: 10.0),
+                          child: Text((widget.loginType == 'admin' ? "Admin: " : "User: ") + (user != null ? _username : ""), style: placeholderStyleBold, maxLines: 3, softWrap: true, overflow: TextOverflow.ellipsis, textAlign: TextAlign.start)
                         )
                         
                       ],
@@ -320,7 +350,32 @@ class UserHomePageState extends State<UserHomePage> with SingleTickerProviderSta
                                     color: Colors.white,
                                     border: new Border(bottom: BorderSide(color: (tabIndex == 0) ? redThemeColor : Colors.transparent, width: 5.0, style: BorderStyle.solid))
                                 ),
-                                child: new Text("Pending OJTs", style: (tabIndex == 0) ? noButtonTextStyleBold : noButtonTextStyle),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: <Widget>[
+                                    Text("Pending OJTs", style: (tabIndex == 0) ? noButtonTextStyleBold : noButtonTextStyle),
+                                    Container(
+                                      padding: EdgeInsets.all(3.0),
+                                      decoration: new BoxDecoration(
+                                        color: redThemeColor,
+                                        borderRadius: BorderRadius.circular(8.0),
+                                      ),
+                                      constraints: BoxConstraints(
+                                        minWidth: 20.0,
+                                        minHeight: 20.0,
+                                      ),
+                                      child: new Text(
+                                        '$filteredPendingOJTsCount',
+                                        style: new TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 10.0,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    )
+                                  ],
+                                ),
                               ),
                             ),
                             new InkWell(
@@ -341,7 +396,32 @@ class UserHomePageState extends State<UserHomePage> with SingleTickerProviderSta
                                     color: Colors.white,
                                     border: new Border(bottom: BorderSide(color: (tabIndex == 1) ? redThemeColor : Colors.transparent, width: 5.0, style: BorderStyle.solid))
                                 ),
-                                child: new Text("All OJTs", style: (tabIndex == 1) ? noButtonTextStyleBold : noButtonTextStyle),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: <Widget>[
+                                    Text("All OJTs", style: (tabIndex == 1) ? noButtonTextStyleBold : noButtonTextStyle),
+                                    Container(
+                                      padding: EdgeInsets.all(3.0),
+                                      decoration: new BoxDecoration(
+                                        color: redThemeColor,
+                                        borderRadius: BorderRadius.circular(8.0),
+                                      ),
+                                      constraints: BoxConstraints(
+                                        minWidth: 20.0,
+                                        minHeight: 20.0,
+                                      ),
+                                      child: new Text(
+                                        '$filteredTotalOJTsCount',
+                                        style: new TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 10.0,
+                                        ),
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    )
+                                  ],
+                                ),
                               )
                             )
                           ],

@@ -8,8 +8,10 @@ class OJTsCardModel {
   dynamic questions;
   int record_id;
   String status;
+  String assigned_date;
+  String due_date;
   
-  OJTsCardModel(this.active, this.assigned_to, this.group_id, this.images, this.no_of_attempts, this.ojt_name, this.questions, this.record_id, this.status);
+  OJTsCardModel(this.active, this.assigned_to, this.group_id, this.images, this.no_of_attempts, this.ojt_name, this.questions, this.record_id, this.status, this.assigned_date, this.due_date);
 
   OJTsCardModel.map(dynamic obj){
     this.active = obj['active'];
@@ -21,6 +23,8 @@ class OJTsCardModel {
     this.questions = obj['questions'];
     this.record_id = obj['record_id'];
     this.status = obj['status'];
+    this.assigned_date = obj['assigned_date'];
+    this.due_date = obj['due_date'];
   }
   
   Map<String, dynamic> toMap() {
@@ -34,6 +38,8 @@ class OJTsCardModel {
     map["questions"] = questions;
     map['record_id'] = record_id;
     map['status'] = status;
+    map['assigned_date'] = assigned_date;
+    map['due_date'] = due_date;
     return map;
   }
 

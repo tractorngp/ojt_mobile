@@ -18,6 +18,7 @@ import 'package:ojt_app/models/user_model.dart';
 import 'dart:convert';
 import 'dart:io' show Platform;
 import 'package:ojt_app/services/services.dart';
+import 'package:auto_orientation/auto_orientation.dart';
 
 class LoginPage extends StatefulWidget {
   final String loginType;
@@ -56,8 +57,17 @@ class LoginPageState extends State<LoginPage>
     idCtrl = new TextEditingController();
     pwdCtrl = new TextEditingController();
     initTheView();
-    // pushSampleOJTs();
   }
+
+  setOrientation() {
+     AutoOrientation.portraitUpMode();
+     SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
+  }
+
+  
 
   initTheView() async{
     _deviceid = await initDeviceId();
@@ -147,7 +157,7 @@ class LoginPageState extends State<LoginPage>
                                     fit: BoxFit.contain,
                                   ),
                                 ),
-                                Text((widget.loginType == 'admin' ? "Admin Login" : "Login"), style: signinTitleStyle)
+                                Text((widget.loginType == 'admin' ? "Admin Login" : "OJT App Login"), style: signinTitleStyle)
                               ]
                           ),
                           
@@ -212,7 +222,7 @@ class LoginPageState extends State<LoginPage>
                             children: <Widget>[
                               new TextButton(
                                   buttonName:
-                                      "Forgot Password?\nCall the admin to reset it.",
+                                      "Forgot Password",
                                   onPressed: _onPressed,
                                   buttonTextStyle: buttonTextStyle)
                             ],

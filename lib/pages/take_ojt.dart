@@ -6,10 +6,12 @@ import 'dart:convert';
 import 'package:ojt_app/components/CustomAssessment/ratingchoice.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'dart:async';
+import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:photo_view/photo_view_gallery.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:collection/collection.dart';
+import 'package:auto_orientation/auto_orientation.dart';
 
 
 class TakeOJTsPage extends StatefulWidget {
@@ -113,6 +115,22 @@ class _TakeOJTsPageState extends State<TakeOJTsPage>{
   void _showSnackBar(String text) {
     _scaffoldKey.currentState
         .showSnackBar(new SnackBar(content: new Text(text)));
+  }
+
+  setOrientationLandscape() {
+     AutoOrientation.landscapeRightMode();
+     SystemChrome.setPreferredOrientations([
+      DeviceOrientation.landscapeRight,
+      DeviceOrientation.landscapeLeft,
+    ]);
+  }
+
+  setOrientationPortrait() {
+     AutoOrientation.portraitUpMode();
+     SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
   }
 
 
@@ -275,6 +293,7 @@ class _TakeOJTsPageState extends State<TakeOJTsPage>{
   }
 
   showPhotoDialog(index){
+    setOrientationLandscape();
     showGeneralDialog(
         context: context,
         barrierColor: Colors.black12.withOpacity(0.8), // background color
@@ -314,15 +333,18 @@ class _TakeOJTsPageState extends State<TakeOJTsPage>{
                 ),
                 Container(
                   width: screenSize.width,
-                  height: screenSize.height * 0.1,
+                  height: screenSize.height * 0.05,
                   child: RaisedButton(
-                    color: Colors.blue[900],
+                    color: redThemeColor,
                     child: Text(
                       "Dismiss",
                       style: TextStyle(fontSize: 20.0),
                     ),
                     textColor: Colors.white,
-                    onPressed: () => Navigator.pop(context),
+                    onPressed: (){
+                      setOrientationPortrait();
+                      Navigator.pop(context);
+                    },
                   )
                 )
               ],

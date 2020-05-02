@@ -72,12 +72,12 @@ class AllOJTsCardState extends State<AllOJTsCard> {
                         Container(
                           width: screenSize.width / 3.5,
                           padding: EdgeInsets.all(5.0),
-                          child: Text(widget.card.title, style: headingTitleNormal, softWrap: true, maxLines: 3, textAlign: TextAlign.center)
+                          child: Text(widget.card.ojt_name, style: headingTitleNormal, softWrap: true, maxLines: 3, textAlign: TextAlign.center)
                         ),
                         Container(
                           width: screenSize.width / 3.5,
                           padding: EdgeInsets.all(5.0),
-                          child: Text(widget.card.id, style: referenceTextStyleSub, softWrap: true, maxLines: 3, textAlign: TextAlign.center)
+                          child: Text(widget.card.record_id.toString(), style: referenceTextStyleSub, softWrap: true, maxLines: 3, textAlign: TextAlign.center)
                         ),
                         Container(
                           width: screenSize.width / 3.5,

@@ -9,6 +9,7 @@ import 'dart:async';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:photo_view/photo_view_gallery.dart';
 import 'package:photo_view/photo_view.dart';
+import 'package:collection/collection.dart';
 
 
 class TakeOJTsPage extends StatefulWidget {
@@ -76,8 +77,11 @@ class _TakeOJTsPageState extends State<TakeOJTsPage>{
       }
     }
 
+    Function eq = const ListEquality().equals;
+
     for(var j=0;j<assessmentQsCopy.length;j++){
       assessmentQsCopy[j].remove('answers');
+      print(eq(assessmentQsCopy[j]['answer_values'], assessmentQsCopy[j]['correct_answers']));
     }
 
     print(assessmentQsCopy);
@@ -147,7 +151,7 @@ class _TakeOJTsPageState extends State<TakeOJTsPage>{
             height: 30.0,
             child: FittedBox(
               fit: BoxFit.contain,
-              child: Text(widget.assessment.title, style: pageTitleStyleNormalNoSize, textAlign: TextAlign.center),
+              child: Text(widget.assessment.ojt_name, style: pageTitleStyleNormalNoSize, textAlign: TextAlign.center),
             )
           ),
           centerTitle: true,
@@ -260,7 +264,7 @@ class _TakeOJTsPageState extends State<TakeOJTsPage>{
                     print("Here I'm! " + (index-2).toString()) ;
                   },
                   child: SingleChildScrollView(
-                    child: RatingChoiceComponent(questionText: assessmentQs[index-2]['questionText'], orderNumber: assessmentQs[index-2]['orderNumber'], options: assessmentQs[index-2]['options'], answers: assessmentQs[index-2]['answers']),
+                    child: RatingChoiceComponent(questionText: assessmentQs[index-2]['question_text'], orderNumber: assessmentQs[index-2]['order_num'], options: assessmentQs[index-2]['options'], answers: assessmentQs[index-2]['answers']),
                   )
                   
               ); 

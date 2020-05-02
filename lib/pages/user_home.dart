@@ -11,7 +11,7 @@ import 'package:ojt_app/pages/take_ojt.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:ojt_app/models/user_model.dart';
 import 'dart:convert';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:ojt_app/services/services.dart';
 
 class UserHomePage extends StatefulWidget {
   final String loginType;
@@ -36,97 +36,30 @@ class UserHomePageState extends State<UserHomePage> with SingleTickerProviderSta
   int tabIndex = 0;
   var filteredAllOJTs = <OJTsCardModel>[];
   var filteredPendingOJTs = <OJTsCardModel>[];
-  var moreOJTs = <OJTsCardModel>[];
+  var filteredPendingOJTsCount = 0;
+  var filteredTotalOJTsCount = 0;
   Future _initialLoad;
   var loadMoreDone;
-  var totalOJTsCount = 2;
+  bool loadMore = false;
   var isDataLoading;
   bool partialLoad = false;
-  var nor = 10, pageIndexGlobal = 0;
-  final Firestore firestore = Firestore.instance;
+  var nor = 3, pageIndexGlobal = 0;
+  RestDatasource api = new RestDatasource();
+  dynamic _lastDocumentAll;
+  dynamic _lastDocumentPending;
+  String _username = "";
 
   @override
   initState(){
     super.initState();
-    initTheView();
     _tabController = new TabController(vsync: this, length: 2, initialIndex: _currentIndex);
     loadMoreDone = true;
     isDataLoading = false;
-    moreOJTs
-    ..add(new OJTsCardModel("1234","Title 1", "pending", ['image1.png','image2.png'],[
-        {
-          "questionText": "How are you?",
-          "orderNumber": 1,
-          "options":[
-            "Good",
-            "Bad",
-            "Don't know"
-          ],
-          "answers": []
-        },
-        {
-          "questionText": "What do you do?",
-          "orderNumber": 2,
-          "options": [
-            "Job",
-            "No Job",
-            "Nothing",
-            "None of the above"
-          ],
-          "answers": []
-        },
-        {
-          "questionText": "Do you like the app?",
-          "orderNumber": 3,
-          "options":[
-            "Yes",
-            "No",
-            "Not sure yet",
-            "None of the above"
-          ],
-          "answers": []
-        }
-    ]))
-    ..add(new OJTsCardModel("2345","Title 2", "complete",['image1.png','image2.png'],[
-        {
-          "questionText": "How are you?",
-          "orderNumber": 1,
-          "options":[
-            "Good",
-            "Bad",
-            "Don't know"
-          ],
-          "answers": []
-        },
-        {
-          "questionText": "What do you do?",
-          "orderNumber": 2,
-          "options": [
-            "Job",
-            "No Job",
-            "Nothing",
-            "None of the above"
-          ],
-          "answers": []
-        },
-        {
-          "questionText": "Do you like the app?",
-          "orderNumber": 3,
-          "options":[
-            "Yes",
-            "No",
-            "Not sure yet",
-            "None of the above"
-          ],
-          "answers": []
-        }
-    ]));
-    this.getData();
+    initTheView();
   }
 
-  initTheView() async{
-    await getUser();
-    fetchOJTsData();
+  initTheView(){
+    getUser();
   }
 
   UserHomePageState(loginType);
@@ -137,47 +70,179 @@ class UserHomePageState extends State<UserHomePage> with SingleTickerProviderSta
     super.dispose();
   }
 
+
+  fetchOJTsCount() async{
+    showLoader();
+    api.fetchOJTsCount(user.tokenId).then((dynamic result){
+      setState(() {
+        filteredPendingOJTsCount = (result.data != null && result.data['pending'] != null) ? result.data['pending'] : 0;
+        filteredTotalOJTsCount = (result.data != null && result.data['total'] != null) ? result.data['total'] : 0;
+      });
+      dismissLoader();
+      getData();
+    }, onError: (err){
+      print("Error");
+      dismissLoader();
+    });
+  }
+
   fetchOJTsData() async{
-    var ojts = firestore.collection('assigned_ojts').where('active', isEqualTo: true).limit(nor).getDocuments();
-    print(ojts);
+    var ojts = [];
+    var all_ojts = <OJTsCardModel>[];
+    if(_lastDocumentAll != null){
+      api.fetchOJTsData(user.tokenId, _lastDocumentAll, null).then((data){
+          _lastDocumentAll = data.documents.last;
+          ojts = data.documents.toList();
+          for(var i=0;i<ojts.length;i++){
+            all_ojts.add(OJTsCardModel.map(ojts[i].data));
+          }
+          setState(() {
+            loadMoreDone = true;
+            if(loadMore == true){
+                filteredAllOJTs = filteredAllOJTs + all_ojts;
+                loadMore = false;
+            }
+            else{
+              filteredAllOJTs = all_ojts;
+            }
+          });
+      }, onError: (err){
+          print(err);
+          _showSnackBar("Error fetching data");
+      });
+    }
+    else{
+      api.fetchOJTsData(user.tokenId, _lastDocumentAll, null).then((data){
+          _lastDocumentAll = data.documents.last;
+          ojts = data.documents.toList();
+          for(var i=0;i<ojts.length;i++){
+            all_ojts.add(OJTsCardModel.map(ojts[i].data));
+          }
+          setState(() {
+            loadMoreDone = true;
+            if(loadMore == true){
+                filteredAllOJTs = filteredAllOJTs + all_ojts;
+                loadMore = false;
+            }
+            else{
+              filteredAllOJTs = all_ojts;
+            }
+          });
+      }, onError: (err){
+          print(err);
+          _showSnackBar("Error fetching data");
+      });
+    }
+  }
+
+
+  fetchPendingOJTsData() async{
+    var ojts = [];
+    var pending_ojts = <OJTsCardModel>[];
+    if(_lastDocumentPending != null){
+      api.fetchOJTsData(user.tokenId, _lastDocumentPending, "assigned").then((data){
+          _lastDocumentPending = data.documents.last;
+          ojts = data.documents.toList();
+          for(var i=0;i<ojts.length;i++){
+            pending_ojts.add(OJTsCardModel.map(ojts[i].data));
+          }
+          setState(() {
+            loadMoreDone = true;
+            if(loadMore == true){
+                filteredPendingOJTs = filteredPendingOJTs + pending_ojts;
+                loadMore = false;
+            }
+            else{
+              filteredPendingOJTs = pending_ojts;
+            }
+          });
+          fetchOJTsData();
+      }, onError: (err){
+          print(err);
+          _showSnackBar("Error fetching data");
+      });
+    }
+    else{
+      api.fetchOJTsData(user.tokenId, _lastDocumentPending, "assigned").then((data){
+          _lastDocumentPending = data.documents.last;
+          ojts = data.documents.toList();
+          for(var i=0;i<ojts.length;i++){
+            pending_ojts.add(OJTsCardModel.map(ojts[i].data));
+          }
+          setState(() {
+            loadMoreDone = true;
+            if(loadMore == true){
+                filteredPendingOJTs = filteredPendingOJTs + pending_ojts;
+                loadMore = false;
+            }
+            else{
+              filteredPendingOJTs = pending_ojts;
+            }
+          });
+          fetchOJTsData();
+      }, onError: (err){
+          print(err);
+          _showSnackBar("Error fetching data");
+      });
+    }
   }
 
   Future<Null> getUser() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     var userString = prefs.getString("user");
     var val = json.decode(userString);
-    user = UserModel.map(val);
+    setState(() {
+      user = UserModel.map(val);
+    });
+    if(user != null){
+      var name;
+      if(user.name.length > 15){
+        name = user.name.split(" ");
+        setState(() {
+          _username = name[0];
+        });
+      }
+      else{
+        _username = user.name;
+      }
+    }
+    fetchOJTsCount();
   }
 
   Future<Null> getData() async{
-    setState(() {
-      filteredAllOJTs = moreOJTs;
-      filteredPendingOJTs = filteredAllOJTs;  
-    });
-    
     _initialLoad = Future.delayed(Duration(seconds: 0), () {
-        // showLoader();
-        // filteredAllOJTs = moreOJTs;
-        // filteredPendingOJTs = filteredAllOJTs;
+        pageIndexGlobal = 0;
+        fetchPendingOJTsData();
     });
+  }
+
+  void _showSnackBar(String text) {
+    _scaffoldKey.currentState
+        .showSnackBar(new SnackBar(content: new Text(text)));
   }
 
   void showLoader(){
     showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (BuildContext context) {
-          _loadingContext = context;
-          return Center(
-            child: SpinKitHourGlass(color: whiteColor)
-          );
-      });
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+      _loadingContext = context;
+      return Center(
+        child: SpinKitHourGlass(color: whiteColor)
+      );
+    });
+  }
+
+  void dismissLoader(){
+    if(_loadingContext != null){
+      Navigator.pop(_loadingContext);
+    }
+    _loadingContext = null;
   }
 
   Future _loadMoreItems() async {
     print("Load more");
-    partialLoad = true;
-    // showLoader();
+    loadMore = true;
     if(loadMoreDone){
       print("Loading data");
       setState(() {
@@ -185,9 +250,7 @@ class UserHomePageState extends State<UserHomePage> with SingleTickerProviderSta
       });
       pageIndexGlobal++;
       //Load more OJTs here
-      var noe = (pageIndexGlobal * nor);
-      filteredAllOJTs = moreOJTs.getRange(noe, noe+2);
-      filteredPendingOJTs = filteredAllOJTs;
+      fetchOJTsData();
     }
   }
 
@@ -201,39 +264,6 @@ class UserHomePageState extends State<UserHomePage> with SingleTickerProviderSta
     return Scaffold(
       key: _scaffoldKey,
         floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-        appBar: new AppBar(
-          title: Container(
-            height: MediaQuery.of(context).size.height * 0.04,
-            child: FittedBox(
-              fit: BoxFit.contain,
-              child: Text((widget.loginType == 'admin' ? "Admin Home" : "User Home"), style: termsStyle, textAlign: TextAlign.center),
-            )
-          ),
-          leading: new Container(
-            height: MediaQuery.of(context).size.height * 0.04,
-            width: 25.0,
-            child: new Stack(
-              alignment: AlignmentDirectional.center,
-              children: <Widget>[
-                new FlatButton(
-                    onPressed: (){
-                      Navigator.pop(
-                        context
-                      );
-                    },
-                    child: new Icon(Icons.arrow_back_ios),
-                )
-              ],
-            ),
-          ),
-          centerTitle: true,
-          textTheme: TextTheme(
-          title: pageTitleStyle),
-          backgroundColor: appBarColor,
-          iconTheme: IconThemeData(
-            color: darkGrey,
-          ),
-        ),
         backgroundColor: whiteColor,
         bottomNavigationBar: BottomNavigationBarComponent(0),
          body:  new SafeArea(
@@ -253,8 +283,10 @@ class UserHomePageState extends State<UserHomePage> with SingleTickerProviderSta
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: <Widget>[
                         Container(
-                          padding: EdgeInsets.only(right: 20.0),
-                          child: Text((widget.loginType == 'admin' ? "Admin: " : "User: ") + 'username', style: textStyle)
+                          width: screenSize.width / 1.5,
+                          padding: EdgeInsets.all(5.0),
+                          margin: EdgeInsets.only(right: 20.0, bottom: 30.0),
+                          child: Text((widget.loginType == 'admin' ? "Admin: " : "User: ") + (user != null ? _username : ""), style: textStyle, maxLines: 3, softWrap: true, textAlign: TextAlign.end)
                         )
                         
                       ],
@@ -330,7 +362,7 @@ class UserHomePageState extends State<UserHomePage> with SingleTickerProviderSta
                                 crossAxisAlignment: CrossAxisAlignment.center,
                                 mainAxisSize: MainAxisSize.max,
                                 children: <Widget>[
-                                  (filteredAllOJTs != null && filteredAllOJTs.length >0) ? 
+                                  (filteredPendingOJTs != null && filteredPendingOJTs.length >0) ? 
                                     new Column(
                                       mainAxisSize: MainAxisSize.max,
                                         children: <Widget>[
@@ -341,39 +373,38 @@ class UserHomePageState extends State<UserHomePage> with SingleTickerProviderSta
                                               case ConnectionState.waiting:
                                               print("Show loader");
                                                 return Container(
-                                                height: MediaQuery.of(context).size.height * 0.06,
+                                                height: 50.0,
                                                 width: screenSize.width,
                                                 padding: EdgeInsets.only(top: 0.0),
                                                 child: Center(child: SpinKitHourGlass(color: darkGrey)));
                                               case ConnectionState.done:
                                               print("Loading complete");
                                               return 
-                                              AspectRatio(
-                                                aspectRatio: !loadMoreDone ? (wp(2)/hp(1.342) + 0.05) : (screenSize.height > 600 ? (wp(2)/hp(1.303)) : (wp(2)/hp(1.265))),
-                                                child: 
+                                              // AspectRatio(
+                                              //   aspectRatio: !loadMoreDone ? (wp(2)/hp(1.342) + 0.05) : (screenSize.height > 600 ? (wp(2)/hp(1.303)) : (wp(2)/hp(1.265))),
+                                              //   child: 
                                                 Container(
-                                                  // height: (screenSize.height > 600) ? (screenSize.height > 812 ? screenSize.height * 0.66 : screenSize.height * 0.6517) : (screenSize.height * 0.64),
-                                                  // height: (screenSize.height > 812 ? hp(68.4) : ((screenSize.height > 736 && screenSize.height <= 812) ? hp(67) : ((screenSize.height > 667 && screenSize.height <= 736) ? hp(65): (screenSize.height > 568 && screenSize.height <= 667) ? hp(65) : hp(60)))),
-                                                  // height: !loadMoreDone ? (screenSize.height > 600 ? hp(60) : hp(50)) : (screenSize.height > 600 ? hp(68.5) : hp(60)),
+                                                height: !loadMoreDone ? (screenSize.height - 100.0) : (screenSize.height - 150.0),
                                                 child: IncrementallyLoadingListView(
-                                                hasMore: () => totalOJTsCount > filteredAllOJTs.length,
-                                                itemCount: () => filteredAllOJTs.length,
+                                                  padding: EdgeInsets.only(bottom: 170.0),
+                                                hasMore: () => filteredPendingOJTsCount > filteredPendingOJTs.length,
+                                                itemCount: () => filteredPendingOJTs.length,
                                                 loadMore: () async {
                                                 // can shorten to "loadMore: _loadMoreItems" but this syntax is used to demonstrate that
                                                 // functions with parameters can also be invoked if needed
                                                 await _loadMoreItems();
                                                 },
                                                 onLoadMore: (){
-                                                  isDataLoading = false;
+                                                  isDataLoading = true;
                                                 },
 
                                                 onLoadMoreFinished: (){
-                                                  isDataLoading = true;
+                                                  isDataLoading = false;
                                                 },
 
                                                 loadMoreOffsetFromBottom: 0,
                                                 itemBuilder: (BuildContext context, int index) {
-                                                  if ((isDataLoading ?? false) && (index == filteredAllOJTs.length - 1) && (totalOJTsCount != filteredAllOJTs.length)) {
+                                                  if ((isDataLoading ?? false) && (index == filteredPendingOJTs.length - 1) && (filteredPendingOJTsCount != filteredPendingOJTs.length)) {
                                                     print("Loading indicator");
                                                   return  Container(
                                                     height: 50.0,
@@ -389,16 +420,16 @@ class UserHomePageState extends State<UserHomePage> with SingleTickerProviderSta
                                                               context,
                                                               MaterialPageRoute(
                                                                 settings: RouteSettings(name: "/takeOJT"),
-                                                                builder: (context) => TakeOJTsPage(title: filteredAllOJTs[index].title, assessment: filteredAllOJTs[index], assessmentFinish: (){
+                                                                builder: (context) => TakeOJTsPage(title: filteredPendingOJTs[index].ojt_name, assessment: filteredPendingOJTs[index], assessmentFinish: (){
                                                                   print("OJT finished");
                                                                 }),
                                                               ),
                                                             );
                                                         },
-                                                        child: AllOJTsCard(filteredAllOJTs[index]));
+                                                        child: AllOJTsCard(filteredPendingOJTs[index]));
                                                   }
                                                     
-                                                })));
+                                                }));
                                                 default:
                                                 return Text('Something went wrong');
                                             }
@@ -421,7 +452,7 @@ class UserHomePageState extends State<UserHomePage> with SingleTickerProviderSta
                                   // height: (visitHistoryList.length * 100).ceilToDouble(),
                                   child: Column(
                                     mainAxisAlignment: MainAxisAlignment.start,
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment: CrossAxisAlignment.center,
                                     children: <Widget>[
                                       (filteredAllOJTs != null && filteredAllOJTs.length >0) ? 
                                         new Column(
@@ -446,7 +477,7 @@ class UserHomePageState extends State<UserHomePage> with SingleTickerProviderSta
                                                     child: 
                                                     Container(
                                                     child: IncrementallyLoadingListView(
-                                                    hasMore: () => totalOJTsCount > filteredAllOJTs.length,
+                                                    hasMore: () => filteredTotalOJTsCount > filteredAllOJTs.length,
                                                     itemCount: () => filteredAllOJTs.length,
                                                     loadMore: () async {
                                                     // can shorten to "loadMore: _loadMoreItems" but this syntax is used to demonstrate that
@@ -463,7 +494,7 @@ class UserHomePageState extends State<UserHomePage> with SingleTickerProviderSta
 
                                                     loadMoreOffsetFromBottom: 0,
                                                     itemBuilder: (BuildContext context, int index) {
-                                                      if ((isDataLoading ?? false) && (index == filteredAllOJTs.length - 1) && (totalOJTsCount != filteredAllOJTs.length)) {
+                                                      if ((isDataLoading ?? false) && (index == filteredAllOJTs.length - 1) && (filteredTotalOJTsCount != filteredAllOJTs.length)) {
                                                         print("Loading indicator");
                                                       return  Container(
                                                         height: 50.0,
@@ -512,9 +543,39 @@ class UserHomePageState extends State<UserHomePage> with SingleTickerProviderSta
   onPressed(String routeName) {
     Navigator.of(context).pushNamed(routeName);
   }
-
-  void _showSnackBar(String text) {
-    _scaffoldKey.currentState
-        .showSnackBar(new SnackBar(content: new Text(text)));
-  }
 }
+
+
+// appBar: new AppBar(
+        //   title: Container(
+        //     height: MediaQuery.of(context).size.height * 0.04,
+        //     child: FittedBox(
+        //       fit: BoxFit.contain,
+        //       child: Text((widget.loginType == 'admin' ? "Admin Home" : "User Home"), style: termsStyle, textAlign: TextAlign.center),
+        //     )
+        //   ),
+        //   leading: new Container(
+        //     height: MediaQuery.of(context).size.height * 0.04,
+        //     width: 25.0,
+        //     child: new Stack(
+        //       alignment: AlignmentDirectional.center,
+        //       children: <Widget>[
+        //         new FlatButton(
+        //             onPressed: (){
+        //               Navigator.pop(
+        //                 context
+        //               );
+        //             },
+        //             child: new Icon(Icons.arrow_back_ios),
+        //         )
+        //       ],
+        //     ),
+        //   ),
+        //   centerTitle: true,
+        //   textTheme: TextTheme(
+        //   title: pageTitleStyle),
+        //   backgroundColor: appBarColor,
+        //   iconTheme: IconThemeData(
+        //     color: darkGrey,
+        //   ),
+        // ),

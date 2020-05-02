@@ -8,7 +8,7 @@ class Validations{
   }
 
   String validateEmail(String value) {
-    if (value.isEmpty) return 'UserId is required.';
+    if (value.isEmpty) return 'Token ID is required.';
     // final RegExp emailExp = new RegExp(r'^\w+@[a-zA-Z_]+?\.[a-zA-Z]{2,3}$');
     // if (!emailExp.hasMatch(value)) return 'Invalid email address';
     return null;

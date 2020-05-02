@@ -1,9 +1,10 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:ojt_app/pages/login.dart';
 import 'package:ojt_app/style/style.dart';
-import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:ojt_app/components/bottom_navigation_bar.dart';
+import 'package:ojt_app/components/Buttons/loginButton.dart';
 
 class AboutPage extends StatefulWidget {
   
@@ -27,6 +28,8 @@ class AboutPageState extends State<AboutPage>
     super.initState();
   }
 
+  var loginBtn;
+
   AboutPageState();
 
   Future<Null> getUserType(type) async {
@@ -34,10 +37,28 @@ class AboutPageState extends State<AboutPage>
     userType = prefs.getString("userType");
   }
 
+  void _logout(){
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        settings: RouteSettings(name: "/userHome"),
+        builder: (context) => LoginPage("user")
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     screenSize = MediaQuery.of(context).size;
-
+    loginBtn = new LoginButton(
+      buttonName: "Logout",
+      onTap: _logout,
+      width: screenSize.width / 3,
+      height: 50.0,
+      bottomMargin: 10.0,
+      borderWidth: 0.0,
+      buttonColor: borderGrey
+    );
     return Scaffold(
       key: _scaffoldKey,
         floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
@@ -111,9 +132,15 @@ class AboutPageState extends State<AboutPage>
                           Text("Tractor PG", style: pageTitleStyle),
 
                           Container(
-                            margin: EdgeInsets.only(top: 50.0),
+                            margin: EdgeInsets.only(top: 30.0),
                             child: Text("Version 1.0", style: termsStyleBoldUnderline)
                           ),
+
+                          Container(
+                            padding: EdgeInsets.all(5.0),
+                            margin: EdgeInsets.only(top: 30.0),
+                            child: loginBtn
+                          )
                         ]
                       )
                     )

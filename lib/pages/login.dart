@@ -8,14 +8,16 @@ import 'package:ojt_app/components/Buttons/textButton.dart';
 import 'package:ojt_app/pages/user_home.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:flutter/services.dart';
-import 'package:firebase_core/firebase_core.dart';
+import 'package:ojt_app/utils/validations.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dbcrypt/dbcrypt.dart';
 import 'package:ojt_app/services/constants.dart' as Constants;
-import 'package:device_id/device_id.dart';
+import 'package:device_info/device_info.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:ojt_app/models/user_model.dart';
 import 'dart:convert';
+import 'dart:io' show Platform;
+import 'package:ojt_app/services/services.dart';
 
 class LoginPage extends StatefulWidget {
   final String loginType;
@@ -43,6 +45,7 @@ class LoginPageState extends State<LoginPage>
   bool autovalidate = false;
   String _deviceid = 'Unknown';
   UserModel user;
+  RestDatasource api = new RestDatasource();
 
   BuildContext _loadingContext;
   final Firestore firestore = Firestore.instance;
@@ -52,25 +55,23 @@ class LoginPageState extends State<LoginPage>
     super.initState();
     idCtrl = new TextEditingController();
     pwdCtrl = new TextEditingController();
-    initDeviceId();
+    initTheView();
+    // pushSampleOJTs();
   }
 
-  Future<void> initDeviceId() async {
-    String deviceid;
-    String imei;
-    String meid;
+  initTheView() async{
+    _deviceid = await initDeviceId();
+  }
 
-    deviceid = await DeviceId.getID;
-    try {
-      imei = await DeviceId.getIMEI;
-      meid = await DeviceId.getMEID;
-    } on PlatformException catch (e) {
-      print(e.message);
+  Future<String> initDeviceId() async {
+    DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
+    if (Platform.isIOS) {
+      IosDeviceInfo iosDeviceInfo = await deviceInfo.iosInfo;
+      return iosDeviceInfo.identifierForVendor; // unique ID on iOS
+    } else {
+      AndroidDeviceInfo androidDeviceInfo = await deviceInfo.androidInfo;
+      return androidDeviceInfo.androidId; // unique ID on Android
     }
-
-    if (!mounted) return;
-
-    _deviceid = deviceid;
   }
 
   LoginPageState(loginType);
@@ -180,7 +181,8 @@ class LoginPageState extends State<LoginPage>
                                   hintStyle: placeholderStyle,
                                   textFieldColor: whiteColor,
                                   bottomMargin: 0.0,
-                                  validateFunction: validations.validateEmail
+                                  validateFunction: validations.validateEmail,
+                                  onSaved: (val) => _username = val
                                   ),
                                 new InputField(
                                     hintText: "Password",
@@ -193,7 +195,7 @@ class LoginPageState extends State<LoginPage>
                                     bottomMargin: 10.0,
                                     validateFunction:
                                         validations.validatePassword,
-                                    ),
+                                    onSaved: (val) => _password = val),
                                 
                                   Container(
                                     padding: EdgeInsets.all(20.0),
@@ -274,58 +276,139 @@ class LoginPageState extends State<LoginPage>
 
 
   void _submit(){
-    showLoader();
-    _username = idCtrl.text;
-    _password = pwdCtrl.text;
-    print("Salt: " + Constants.SALT);
-    DocumentReference documentReference = Firestore.instance.collection("users").document(_username);
-    documentReference.get().then((datasnapshot) {
-      if (datasnapshot.exists) {
-        print(datasnapshot.data['name'].toString());
-        var passHash = datasnapshot.data['hpw'];
-        var passwordsMatch = DBCrypt().checkpw(_password, passHash);
-        var checkIfDeviceRegistered = (datasnapshot.data['deviceToken'] != null ? ((datasnapshot.data['deviceToken'].toString() == _deviceid.toString()) ? false : true) : false);
-        print(passwordsMatch);
-        dismissLoader();
-        if(passwordsMatch && !checkIfDeviceRegistered){
-          if(datasnapshot.data['role'].toString() != "user"){
-            _showSnackBar("Not authorized to login.");
-          }
-          else if(datasnapshot.data['active'] != null && datasnapshot.data['active'] == false){
-            _showSnackBar("User deactivated. Please contact admin.");
+    final form = formKey.currentState;
+    if (form.validate()) {
+      showLoader();
+      _username = idCtrl.text;
+      _password = pwdCtrl.text;
+      print("Salt: " + Constants.SALT);
+
+      DocumentReference documentReference;
+      api.getDocumentReference("users", _username).then((DocumentReference docRef){
+        documentReference = docRef;
+          api.login(_username, _password).then((DocumentSnapshot datasnapshot){
+          if (datasnapshot != null) {
+            print(datasnapshot.data['name'].toString());
+            var passHash = datasnapshot.data['hpw'];
+            var passwordsMatch = DBCrypt().checkpw(_password, passHash);
+            var checkIfDeviceRegistered = (datasnapshot.data['deviceToken'] != null ? ((datasnapshot.data['deviceToken'].toString() == _deviceid.toString()) ? false : true) : false);
+            print(passwordsMatch);
+            dismissLoader();
+            if(passwordsMatch && !checkIfDeviceRegistered){
+              if(datasnapshot.data['role'].toString() != "user"){
+                _showSnackBar("Not authorized to login.");
+              }
+              else if(datasnapshot.data['active'] != null && datasnapshot.data['active'] == false){
+                _showSnackBar("User deactivated. Please contact admin.");
+              }
+              else{
+                user = UserModel.map(datasnapshot.data);
+                Firestore.instance.runTransaction((Transaction tx) async {
+                  await storeUser();
+                  await tx.update(documentReference, <String, dynamic>{'deviceToken': _deviceid});
+                  setState(() {
+                    idCtrl.text = "";
+                    pwdCtrl.text = "";
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                        settings: RouteSettings(name: "/userHome"),
+                        builder: (context) => UserHomePage(widget.loginType)
+                      ),
+                    );
+                  });
+                });
+              }
+            }
+            else if(checkIfDeviceRegistered == true){
+              print("There is another device registered with the user. Please contact admin.");
+              _showSnackBar("There is another device registered with the user. Please contact admin.");
+            }
+            else{
+              print("Invalid password");
+              _showSnackBar("Invalid password");
+            }
           }
           else{
-            user = UserModel.map(datasnapshot.data);
-            Firestore.instance.runTransaction((Transaction tx) async {
-              await storeUser();
-              await tx.update(documentReference, <String, dynamic>{'deviceToken': _deviceid});
-              setState(() {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    settings: RouteSettings(name: "/userHome"),
-                    builder: (context) => UserHomePage(widget.loginType)
-                  ),
-                );
-              });
-            });
+            dismissLoader();
+            print("No such user");
+            _showSnackBar("Invalid user");
           }
-        }
-        else if(checkIfDeviceRegistered == true){
-          print("There is another device registered with the user. Please contact admin.");
-          _showSnackBar("There is another device registered with the user. Please contact admin.");
-        }
-        else{
-          print("Invalid password");
-          _showSnackBar("Invalid password");
-        }
-      }
-      else{
-        dismissLoader();
-        print("No such user");
-        _showSnackBar("Invalid user");
-      }
-    });
+        });
+      });    
+    }
   }
-
 }
+
+
+// pushSampleOJTs(){
+  //   var ojtTemplate = {
+  //     "active": true,
+  //     "questions": [
+  //         {
+  //             "question_text": "How are you?",
+  //             "options": ["Good", "Bad", "Ok", "None of the above"],
+  //             "order_num": 1,
+  //             "correct_answers": ["Good", "Ok"]
+  //         },
+  //         {
+  //             "question_text": "How do you like the app?",
+  //             "options": ["Good", "Bad", "Not Great", "Average", "Don't know"],
+  //             "order_num": 2,
+  //             "correct_answers": ["Good"]
+  //         },
+  //         {
+  //             "question_text": "Did you answer above questions?",
+  //             "options": ["Yes", "No"],
+  //             "order_num": 3,
+  //             "correct_answers": ["Yes"]
+  //         }
+
+  //         {
+  //             "question_text": "What do you do?",
+  //             "options": ["Job", "Homemaker", "Who gives a shit"],
+  //             "order_num": 1,
+  //             "correct_answers": ["Who gives a shit"]
+  //         },
+
+  //         {
+  //             "question_text": "What's your age?",
+  //             "options": ["0-10", "10-20", "20-50","Dead"],
+  //             "order_num": 2,
+  //             "correct_answers": ["20-50"]
+  //         },
+  //         {
+  //             "question_text": "Is this the last question?",
+  //             "options": ["Yes", "No"],
+  //             "order_num": 3,
+  //             "correct_answers": ["Yes"]
+  //         }
+
+  //         {
+  //             "question_text": "The answer is yes",
+  //             "options": ["Yes", "No"],
+  //             "order_num": 1,
+  //             "correct_answers": ["Yes"]
+  //         }
+  //         {
+  //             "question_text": "Do you like this app (Hint: Ofcourse you have to!)?",
+  //             "options": ["Yes", "No"],
+  //             "order_num": 1,
+  //             "correct_answers": ["Yes"]
+  //         }
+  //     ],
+  //     "assigned_to": "/users/1115",
+  //     "group_id": "/users/group3",
+  //     "images": ["image1.png", "image2.png"],
+  //     "no_of_attempts": 0,
+  //     "ojt_name": "OJT 4",
+  //     "record_id": "19",
+  //     "status": "assigned"
+  //   };
+
+  //   firestore.collection("assigned_ojts").document('rec19').setData(ojtTemplate).then((result) => {
+  //       print("Document successfully written!")
+  //   }).catchError((error) => {
+  //       print("Error writing document: " + error)
+  //   });
+  // }

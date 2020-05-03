@@ -5,10 +5,12 @@ import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ResultPage extends StatefulWidget {
-  
+  ResultPage({Key key, this.didPass, this.assessmentFinish}) : super(key: key);
+  final bool didPass;
+  final VoidCallback assessmentFinish;
   @override
   ResultPageState createState(){
-    return new ResultPageState();
+    return new ResultPageState(this.didPass);
   }
 }
 
@@ -19,14 +21,14 @@ class ResultPageState extends State<ResultPage>
   Size screenSize;
   ScrollController scrollController = new ScrollController();
   String userType;
-
+  bool didPass;
   BuildContext _loadingContext;
 
   void initState() {
     super.initState();
   }
 
-  ResultPageState();
+  ResultPageState(didPass);
 
   Future<Null> getUserType(type) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -62,6 +64,7 @@ class ResultPageState extends State<ResultPage>
                       }
                       else{
                         Navigator.popUntil(context, ModalRoute.withName("/userHome"));
+                        widget.assessmentFinish();
                       }
                     },
                     child: new Icon(Icons.arrow_back_ios),
@@ -130,7 +133,7 @@ class ResultPageState extends State<ResultPage>
                           Container(
                             margin: EdgeInsets.only(top: 30.0),
                             child: Image.asset(
-                              'assets/completed.png',
+                            ((widget.didPass != null && widget.didPass == true) ? 'assets/completed.png' : 'assets/failed.png'),
                               height: 150.0,
                               width: 180.0,
                               fit: BoxFit.contain,
@@ -138,7 +141,7 @@ class ResultPageState extends State<ResultPage>
                           ),
                           Container(
                             margin: EdgeInsets.only(top: 10.0),
-                            child: Text("Completed", style: questionStyle)
+                            child: Text(((widget.didPass != null && widget.didPass == true) ? "Completed" : "Failed"), style: questionStyle)
                           )
 
                         ]

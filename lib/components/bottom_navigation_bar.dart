@@ -50,12 +50,12 @@ class BottomNavigationBarState extends State<BottomNavigationBarComponent>{
             items: [
               BottomNavigationBarItem(
                 backgroundColor: bottomTabBar,
-                icon: new Icon(Icons.home, color: _currentIndex == 0 ? Colors.blueAccent[200] : Colors.black54),
+                icon: new Icon(Icons.home, color: _currentIndex == 0 ? redThemeColor : Colors.black54),
                 title: Text('')
               ),
               BottomNavigationBarItem(
                 backgroundColor: bottomTabBar,
-                icon: Icon(Icons.help, color: _currentIndex == 1 ? Colors.blueAccent[200] : Colors.black54),
+                icon: Icon(Icons.help, color: _currentIndex == 1 ? redThemeColor : Colors.black54),
                 title: Text('')
               ),
             ],

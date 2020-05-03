@@ -33,6 +33,9 @@ dependencies:
   dbcrypt: ^1.0.0
   device_info: ^0.4.0+4
   cloud_functions: ^0.4.2+3
+  auto_orientation: ^1.0.1
+  date_format: ^1.0.6
+  firebase_messaging: ^6.0.13
 
 dev_dependencies:
   flutter_test:
@@ -55,6 +58,7 @@ flutter:
    - assets/full_logo.png
    - assets/tractor.png
    - assets/completed.png
+   - assets/failed.png
    - assets/image1.png
    - assets/image2.png
 

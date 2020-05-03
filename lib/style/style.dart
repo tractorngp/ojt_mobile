@@ -234,6 +234,12 @@ fontSize: 18.0,
 fontFamily: fontFamilyName,
 fontWeight: FontWeight.normal);
 
+TextStyle placeholderStyleBold = TextStyle(
+color: hintColor,
+fontSize: 18.0,
+fontFamily: fontFamilyName,
+fontWeight: FontWeight.bold);
+
 TextStyle questionStyle = TextStyle(
     color: darkIndigo,
     fontSize: 16.0,

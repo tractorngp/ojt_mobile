@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:ojt_app/style/style.dart';
 
 class RatingChoiceComponent extends StatefulWidget {
-  RatingChoiceComponent({Key key, this.questionText, this.orderNumber, this.options, this.answers}) : super(key: key);
+  RatingChoiceComponent({Key key, this.questionText, this.orderNumber, this.options, this.answers, this.q_type}) : super(key: key);
   final String questionText;
   final int orderNumber;
   final dynamic options;
   final dynamic answers;
+  final String q_type;
 
   @override
   _RatingChoicePageState createState() => _RatingChoicePageState();
@@ -43,13 +44,20 @@ class _RatingChoicePageState extends State<RatingChoiceComponent> {
                       onTap: () {
                         setState(() {
                           widget.answers[index] = !widget.answers[index];
-                          // if(widget.answers[index] == true){
-                          //   for(var k=0;k<widget.answers.length;k++){
-                          //     if(k != index){
-                          //       widget.answers[k] = false;
-                          //     }
-                          //   }
-                          // }
+                          if(widget.q_type == "single"){
+                            print("Single choice");
+                            if(widget.answers[index] == true){
+                              for(var k=0;k<widget.answers.length;k++){
+                                if(k != index){
+                                  widget.answers[k] = false;
+                                }
+                              }
+                            }
+                          }
+                          else{
+                            print("Multiple choice");
+                          }
+                          
                           print(widget.answers);
                         });
                       },
@@ -78,13 +86,20 @@ class _RatingChoicePageState extends State<RatingChoiceComponent> {
                               onTap: (){
                                 setState(() {
                                   widget.answers[index] = !widget.answers[index];
-                                  // if(widget.answers[index] == true){
-                                  //   for(var k=0;k<widget.answers.length;k++){
-                                  //     if(k != index){
-                                  //       widget.answers[k] = false;
-                                  //     }
-                                  //   }
-                                  // }
+
+                                  if(widget.q_type == "single"){
+                                    print("Single choice");
+                                    if(widget.answers[index] == true){
+                                      for(var k=0;k<widget.answers.length;k++){
+                                        if(k != index){
+                                          widget.answers[k] = false;
+                                        }
+                                      }
+                                    }
+                                  }
+                                  else{
+                                    print("Multiple choice");
+                                  }
                                   print(widget.answers);
                                 });
                               }

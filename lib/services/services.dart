@@ -20,6 +20,59 @@ class RestDatasource {
     return docsnap;
   }
 
+  Future<dynamic> updateAssessmentStatus(String assessmentId, bool pass, int noOfAttempts, dynamic questions) async{
+    DocumentReference documentReference = Firestore.instance.collection("assigned_ojts").document(assessmentId);
+    if(pass == true){
+        var data = await Firestore.instance.runTransaction((Transaction tx) async {
+          DocumentSnapshot postSnapshot = await tx.get(documentReference);
+          var newData = {
+            'status': 'completed',
+            'dateTime_completed': DateTime.now().toUtc().toString()
+          };
+          if(postSnapshot.exists){
+            await tx.update(documentReference, newData).catchError((e) {
+              print(e.toString());
+            })
+              .whenComplete(() {
+                print("Complete");
+              });
+            return;
+          }
+        });
+        return data;
+    }
+    else{
+      var data = await Firestore.instance.runTransaction((Transaction tx) async {
+        DocumentSnapshot postSnapshot = await tx.get(documentReference);
+        var newData = {
+          'no_of_attempts': noOfAttempts + 1,
+          'dateTime_completed': DateTime.now().toUtc().toString(),
+          'questions': questions
+        };
+        if(postSnapshot.exists){
+          await tx.update(documentReference, newData).catchError((e) {
+            print(e.toString());
+          })
+            .whenComplete(() {
+              print("Complete");
+            });
+        }
+        
+        return;
+      });
+
+      return data;
+      }
+  }
+
+  Future<bool> updateDeviceToken(String deviceId, String pushToken, DocumentReference documentReference) async{
+    await Firestore.instance.runTransaction((Transaction tx) async {
+      await tx.update(documentReference, <String, dynamic>{'deviceToken': deviceId, 'pushToken': pushToken});
+      return;
+    });
+    return true;
+  }
+
   Future<DocumentReference> getDocumentReference(String collection, String docID) async{
     return Firestore.instance.collection(collection).document(docID);
   }

@@ -12,6 +12,7 @@ import 'package:photo_view/photo_view_gallery.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:collection/collection.dart';
 import 'package:auto_orientation/auto_orientation.dart';
+import 'package:ojt_app/services/services.dart';
 
 
 class TakeOJTsPage extends StatefulWidget {
@@ -31,6 +32,7 @@ class _TakeOJTsPageState extends State<TakeOJTsPage>{
   List<dynamic> images = [];
   String userType;
   Timer _timer;
+  RestDatasource api = new RestDatasource();
   var global_index = 0;
   var prevIndex = 0;
   var currentIndex = 0;
@@ -61,7 +63,7 @@ class _TakeOJTsPageState extends State<TakeOJTsPage>{
   }
 
   processAnswerValues(){
-    List<dynamic> optionsArr = [];
+    showLoader();
     var assessmentQsCopy = json.decode(json.encode(assessmentQs));
     for(var i=0;i<assessmentQsCopy.length;i++){
       var answersArray = [];
@@ -74,33 +76,43 @@ class _TakeOJTsPageState extends State<TakeOJTsPage>{
         assessmentQsCopy[i]['answer_values'] = answersArray;
       }
       else{
+        dismissLoader();
         _showSnackBar("Please answer all questions!");
         return;
       }
     }
 
     Function eq = const ListEquality().equals;
-
+    var answersMatch = false;
     for(var j=0;j<assessmentQsCopy.length;j++){
       assessmentQsCopy[j].remove('answers');
-      print(eq(assessmentQsCopy[j]['answer_values'], assessmentQsCopy[j]['correct_answers']));
+      if(eq(assessmentQsCopy[j]['answer_values'], assessmentQsCopy[j]['correct_answers'])){
+        print("Answers matched for: " + j.toString());
+        answersMatch = true;
+      }
+      else{
+        print("Answers didn't match for: " + j.toString());
+        answersMatch = false;
+        break;
+      }
     }
 
-    print(assessmentQsCopy);
-    var queryBody = {
-      "questions" : assessmentQsCopy,
-      "id" : widget.assessment.id,
-      "dateTime_completed": DateTime.now().toUtc().toString(),
-      "status" : "complete"
-    };
-    // showLoader();
-
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => ResultPage()
-      )
-    );
+    api.updateAssessmentStatus(widget.assessment.record_id, answersMatch, widget.assessment.no_of_attempts, assessmentQsCopy).then((res){
+        print("Status updated");
+        dismissLoader();
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ResultPage(didPass: answersMatch, assessmentFinish: (){
+              widget.assessmentFinish();
+            })
+          )
+        );
+      }, onError: (err){
+        dismissLoader();
+        print("Error: " + err.toString());
+        _showSnackBar(err.toString());
+    });
 
   }
 
@@ -282,7 +294,7 @@ class _TakeOJTsPageState extends State<TakeOJTsPage>{
                     print("Here I'm! " + (index-2).toString()) ;
                   },
                   child: SingleChildScrollView(
-                    child: RatingChoiceComponent(questionText: assessmentQs[index-2]['question_text'], orderNumber: assessmentQs[index-2]['order_num'], options: assessmentQs[index-2]['options'], answers: assessmentQs[index-2]['answers']),
+                    child: RatingChoiceComponent(questionText: assessmentQs[index-2]['question_text'], orderNumber: assessmentQs[index-2]['order_num'], options: assessmentQs[index-2]['options'], answers: assessmentQs[index-2]['answers'], q_type: assessmentQs[index-2]['q_type']),
                   )
                   
               ); 

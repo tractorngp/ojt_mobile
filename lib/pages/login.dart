@@ -19,6 +19,7 @@ import 'dart:convert';
 import 'dart:io' show Platform;
 import 'package:ojt_app/services/services.dart';
 import 'package:auto_orientation/auto_orientation.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 class LoginPage extends StatefulWidget {
   final String loginType;
@@ -45,9 +46,10 @@ class LoginPageState extends State<LoginPage>
   TextEditingController pwdCtrl;
   bool autovalidate = false;
   String _deviceid = 'Unknown';
+  String pushToken;
   UserModel user;
   RestDatasource api = new RestDatasource();
-
+  final FirebaseMessaging _firebaseMessaging = FirebaseMessaging();
   BuildContext _loadingContext;
   final Firestore firestore = Firestore.instance;
 
@@ -57,6 +59,10 @@ class LoginPageState extends State<LoginPage>
     idCtrl = new TextEditingController();
     pwdCtrl = new TextEditingController();
     initTheView();
+    _firebaseMessaging.getToken().then((String token) {
+      print("Push Messaging token: $token");
+      pushToken = token;
+    });
   }
 
   setOrientation() {
@@ -313,20 +319,19 @@ class LoginPageState extends State<LoginPage>
               }
               else{
                 user = UserModel.map(datasnapshot.data);
-                Firestore.instance.runTransaction((Transaction tx) async {
-                  await storeUser();
-                  await tx.update(documentReference, <String, dynamic>{'deviceToken': _deviceid});
-                  setState(() {
-                    idCtrl.text = "";
-                    pwdCtrl.text = "";
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                        settings: RouteSettings(name: "/userHome"),
-                        builder: (context) => UserHomePage(widget.loginType)
-                      ),
-                    );
-                  });
+                api.updateDeviceToken(_deviceid, pushToken, documentReference).then((res) async{
+                    await storeUser();
+                    setState(() {
+                      idCtrl.text = "";
+                      pwdCtrl.text = "";
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          settings: RouteSettings(name: "/userHome"),
+                          builder: (context) => UserHomePage('user')
+                        ),
+                      );
+                    });
                 });
               }
             }

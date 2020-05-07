@@ -12,6 +12,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:ojt_app/models/user_model.dart';
 import 'dart:convert';
 import 'package:ojt_app/services/services.dart';
+import 'dart:async';
 
 class UserHomePage extends StatefulWidget {
   final String loginType;
@@ -43,11 +44,16 @@ class UserHomePageState extends State<UserHomePage> with SingleTickerProviderSta
   bool loadMore = false;
   var isDataLoading;
   bool partialLoad = false;
-  var nor = 3, pageIndexGlobal = 0;
+  var pageIndexGlobal = 0;
   RestDatasource api = new RestDatasource();
   dynamic _lastDocumentAll;
   dynamic _lastDocumentPending;
   String _username = "";
+  final GlobalKey<RefreshIndicatorState> _refreshIndicatorKey1 =
+    new GlobalKey<RefreshIndicatorState>();
+  final GlobalKey<RefreshIndicatorState> _refreshIndicatorKey2 =
+    new GlobalKey<RefreshIndicatorState>();
+  Completer<Null> completer = new Completer<Null>();
 
   @override
   initState(){
@@ -58,7 +64,14 @@ class UserHomePageState extends State<UserHomePage> with SingleTickerProviderSta
     initTheView();
   }
 
-  initTheView(){
+  Future<Null> initTheView() async{
+    _lastDocumentAll = null;
+    _lastDocumentPending = null;
+    pageIndexGlobal = 0;
+    filteredPendingOJTsCount = 0;
+    filteredTotalOJTsCount = 0;
+    filteredAllOJTs = [];
+    filteredPendingOJTs = [];
     getUser();
   }
 
@@ -222,15 +235,17 @@ class UserHomePageState extends State<UserHomePage> with SingleTickerProviderSta
   }
 
   void showLoader(){
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-      _loadingContext = context;
-      return Center(
-        child: SpinKitHourGlass(color: whiteColor)
-      );
-    });
+    if(context != null){
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) {
+        _loadingContext = context;
+        return Center(
+          child: SpinKitHourGlass(color: whiteColor)
+        );
+      });
+    }
   }
 
   void dismissLoader(){
@@ -272,8 +287,8 @@ class UserHomePageState extends State<UserHomePage> with SingleTickerProviderSta
           child: SingleChildScrollView(
             controller: scrollController,
             child: Container(
-              height: screenSize.height,
-              padding: EdgeInsets.only(left: 0.0,top: 20.0, right: 0.0),
+              height: screenSize.height + 10.0,
+              padding: EdgeInsets.only(left: 0.0,top: 0.0, right: 0.0),
                 child: new Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.center,
@@ -315,7 +330,7 @@ class UserHomePageState extends State<UserHomePage> with SingleTickerProviderSta
                         Container(
                           width: screenSize.width / 1.5,
                           padding: EdgeInsets.all(5.0),
-                          margin: EdgeInsets.only(left: 20.0, bottom: 10.0),
+                          margin: EdgeInsets.only(left: 20.0, bottom: 10.0, top: 5.0),
                           child: Text((widget.loginType == 'admin' ? "Admin: " : "User: ") + (user != null ? _username : ""), style: placeholderStyleBold, maxLines: 3, softWrap: true, overflow: TextOverflow.ellipsis, textAlign: TextAlign.start)
                         )
                         
@@ -465,6 +480,9 @@ class UserHomePageState extends State<UserHomePage> with SingleTickerProviderSta
                                               //   child: 
                                                 Container(
                                                 height: !loadMoreDone ? (screenSize.height - 100.0) : (screenSize.height - 150.0),
+                                                child: RefreshIndicator(
+                                                key: _refreshIndicatorKey1,
+                                                onRefresh: initTheView,
                                                 child: IncrementallyLoadingListView(
                                                   padding: EdgeInsets.only(bottom: 170.0),
                                                 hasMore: () => filteredPendingOJTsCount > filteredPendingOJTs.length,
@@ -502,6 +520,7 @@ class UserHomePageState extends State<UserHomePage> with SingleTickerProviderSta
                                                                 settings: RouteSettings(name: "/takeOJT"),
                                                                 builder: (context) => TakeOJTsPage(title: filteredPendingOJTs[index].ojt_name, assessment: filteredPendingOJTs[index], assessmentFinish: (){
                                                                   print("OJT finished");
+                                                                  initTheView();
                                                                 }),
                                                               ),
                                                             );
@@ -509,7 +528,7 @@ class UserHomePageState extends State<UserHomePage> with SingleTickerProviderSta
                                                         child: AllOJTsCard(filteredPendingOJTs[index]));
                                                   }
                                                     
-                                                }));
+                                                })));
                                                 default:
                                                 return Text('Something went wrong');
                                             }
@@ -556,7 +575,10 @@ class UserHomePageState extends State<UserHomePage> with SingleTickerProviderSta
                                                     aspectRatio: !loadMoreDone ? (wp(2)/hp(1.342) + 0.05) : (screenSize.height > 600 ? (wp(2)/hp(1.303)) : (wp(2)/hp(1.265))),
                                                     child: 
                                                     Container(
-                                                    child: IncrementallyLoadingListView(
+                                                    child:  RefreshIndicator(
+                                                    key: _refreshIndicatorKey2,
+                                                    onRefresh: initTheView,
+                                                    child:  IncrementallyLoadingListView(
                                                     hasMore: () => filteredTotalOJTsCount > filteredAllOJTs.length,
                                                     itemCount: () => filteredAllOJTs.length,
                                                     loadMore: () async {
@@ -590,7 +612,7 @@ class UserHomePageState extends State<UserHomePage> with SingleTickerProviderSta
                                                             child: AllOJTsCard(filteredAllOJTs[index]));
                                                       }
                                                         
-                                                    })));
+                                                    }))));
                                                     default:
                                                     return Text('Something went wrong');
                                                 }

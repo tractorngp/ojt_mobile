@@ -145,7 +145,7 @@ class LoginPageState extends State<LoginPage>
                           ),
 
                         Container(
-                          padding: new EdgeInsets.only(bottom: 0, left: 0, right: 20.0, top: 40.0),
+                          padding: new EdgeInsets.only(bottom: 0, left: 0, right: 20.0, top: 20.0),
                           child: new Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             mainAxisAlignment: MainAxisAlignment.center,

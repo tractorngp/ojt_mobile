@@ -53,7 +53,13 @@ class UserHomePageState extends State<UserHomePage> with SingleTickerProviderSta
     new GlobalKey<RefreshIndicatorState>();
   final GlobalKey<RefreshIndicatorState> _refreshIndicatorKey2 =
     new GlobalKey<RefreshIndicatorState>();
+  final GlobalKey<RefreshIndicatorState> _refreshIndicatorKey3 =
+    new GlobalKey<RefreshIndicatorState>();
+  final GlobalKey<RefreshIndicatorState> _refreshIndicatorKey4 =
+    new GlobalKey<RefreshIndicatorState>();
   Completer<Null> completer = new Completer<Null>();
+
+  String ojtsLoadingText = "Loading...";
 
   @override
   initState(){
@@ -72,6 +78,7 @@ class UserHomePageState extends State<UserHomePage> with SingleTickerProviderSta
     filteredTotalOJTsCount = 0;
     filteredAllOJTs = [];
     filteredPendingOJTs = [];
+    ojtsLoadingText = "Loading...";
     getUser();
   }
 
@@ -104,6 +111,7 @@ class UserHomePageState extends State<UserHomePage> with SingleTickerProviderSta
     var all_ojts = <OJTsCardModel>[];
     if(_lastDocumentAll != null){
       api.fetchOJTsData(user.tokenId, _lastDocumentAll, null).then((data){
+        if(data.documents != null && data.documents.length > 0)
           _lastDocumentAll = data.documents.last;
           ojts = data.documents.toList();
           for(var i=0;i<ojts.length;i++){
@@ -118,6 +126,8 @@ class UserHomePageState extends State<UserHomePage> with SingleTickerProviderSta
             else{
               filteredAllOJTs = all_ojts;
             }
+
+            ojtsLoadingText = "No OJT's found";
           });
       }, onError: (err){
           print(err);
@@ -126,6 +136,7 @@ class UserHomePageState extends State<UserHomePage> with SingleTickerProviderSta
     }
     else{
       api.fetchOJTsData(user.tokenId, _lastDocumentAll, null).then((data){
+        if(data.documents != null && data.documents.length > 0)
           _lastDocumentAll = data.documents.last;
           ojts = data.documents.toList();
           for(var i=0;i<ojts.length;i++){
@@ -140,6 +151,7 @@ class UserHomePageState extends State<UserHomePage> with SingleTickerProviderSta
             else{
               filteredAllOJTs = all_ojts;
             }
+            ojtsLoadingText = "No OJT's found";
           });
       }, onError: (err){
           print(err);
@@ -154,6 +166,7 @@ class UserHomePageState extends State<UserHomePage> with SingleTickerProviderSta
     var pending_ojts = <OJTsCardModel>[];
     if(_lastDocumentPending != null){
       api.fetchOJTsData(user.tokenId, _lastDocumentPending, "assigned").then((data){
+        if(data.documents != null && data.documents.length > 0)
           _lastDocumentPending = data.documents.last;
           ojts = data.documents.toList();
           for(var i=0;i<ojts.length;i++){
@@ -168,6 +181,7 @@ class UserHomePageState extends State<UserHomePage> with SingleTickerProviderSta
             else{
               filteredPendingOJTs = pending_ojts;
             }
+            ojtsLoadingText = "No OJT's found";
           });
           fetchOJTsData();
       }, onError: (err){
@@ -177,6 +191,7 @@ class UserHomePageState extends State<UserHomePage> with SingleTickerProviderSta
     }
     else{
       api.fetchOJTsData(user.tokenId, _lastDocumentPending, "assigned").then((data){
+          if(data.documents != null && data.documents.length > 0)
           _lastDocumentPending = data.documents.last;
           ojts = data.documents.toList();
           for(var i=0;i<ojts.length;i++){
@@ -191,6 +206,7 @@ class UserHomePageState extends State<UserHomePage> with SingleTickerProviderSta
             else{
               filteredPendingOJTs = pending_ojts;
             }
+            ojtsLoadingText = "No OJT's found";
           });
           fetchOJTsData();
       }, onError: (err){
@@ -540,8 +556,22 @@ class UserHomePageState extends State<UserHomePage> with SingleTickerProviderSta
                                   
                                     
                                     : Container(
-                                          padding: EdgeInsets.only(top: 10.0, bottom: 10.0),
-                                          child: Text("No OJTs found.", style: termsStyle)
+                                        width: screenSize.width,
+                                        height: screenSize.height / 2,
+                                        child: RefreshIndicator(
+                                          key: _refreshIndicatorKey3,
+                                          onRefresh: initTheView,
+                                          child: ListView(
+                                              padding: const EdgeInsets.all(8),
+                                              children: <Widget>[
+                                                Container(
+                                                  alignment: Alignment.bottomCenter,
+                                                  padding: EdgeInsets.only(top: 10.0, bottom: 10.0),
+                                                  child: Text(ojtsLoadingText, style: referenceTextStyleSub)
+                                                )
+                                              ],
+                                          )
+                                        )
                                       )
                                   ], 
                                 ),
@@ -622,11 +652,24 @@ class UserHomePageState extends State<UserHomePage> with SingleTickerProviderSta
                                           ]
                                         )
                                       
-                                        
-                                        : Container(
-                                              padding: EdgeInsets.only(top: 10.0, bottom: 10.0),
-                                              child: Text("No OJTs found.", style: termsStyle)
-                                          )
+                                      :  Container(
+                                            width: screenSize.width,
+                                            height: screenSize.height / 2,
+                                            child: RefreshIndicator(
+                                              key: _refreshIndicatorKey4,
+                                              onRefresh: initTheView,
+                                              child: ListView(
+                                                  padding: const EdgeInsets.all(8),
+                                                  children: <Widget>[
+                                                    Container(
+                                                      alignment: Alignment.bottomCenter,
+                                                      padding: EdgeInsets.only(top: 10.0, bottom: 10.0),
+                                                      child: Text(ojtsLoadingText, style: referenceTextStyleSub)
+                                                    )
+                                                  ],
+                                              )
+                                            )
+                                        )
                                       
                                     ], 
                                   ),

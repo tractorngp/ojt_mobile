@@ -203,7 +203,7 @@ class _TakeOJTsPageState extends State<TakeOJTsPage>{
                   child: new Container(
                     width: screenSize.width,
                     child : FlatButton(
-                      color: themeColor,
+                      color: redThemeColor,
                       textColor: whiteColor,
                       shape: new RoundedRectangleBorder(
                       borderRadius: new BorderRadius.circular(10.0)),

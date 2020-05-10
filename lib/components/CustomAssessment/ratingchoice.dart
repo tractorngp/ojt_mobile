@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:ojt_app/style/style.dart';
 
 class RatingChoiceComponent extends StatefulWidget {
-  RatingChoiceComponent({Key key, this.questionText, this.orderNumber, this.options, this.answers, this.q_type}) : super(key: key);
+  RatingChoiceComponent({Key key, this.questionText, this.orderNumber, this.options, this.answers, this.q_type, this.status, this.answer_values}) : super(key: key);
   final String questionText;
   final int orderNumber;
   final dynamic options;
   final dynamic answers;
+  final dynamic answer_values;
   final String q_type;
+  final String status;
 
   @override
   _RatingChoicePageState createState() => _RatingChoicePageState();
@@ -19,12 +21,37 @@ class _RatingChoicePageState extends State<RatingChoiceComponent> {
   Size screenSize;
   List<dynamic> optionsArr = [];
   int optionsLength;
+  bool disabled = false;
   @override
   void initState() {
     super.initState();
     print("***************Init cells Rating****************");
     optionsArr = widget.options;
     optionsLength = widget.options.length;
+    disabled = (widget.status != null ? (widget.status == 'completed' ? true : false) : false);
+    if(disabled == true){
+      populatedSelectedAnswers();
+    }
+  }
+
+  void _showSnackBar(String text) {
+    Scaffold.of(context)
+        .showSnackBar(new SnackBar(content: Container(
+          padding: EdgeInsets.all(3.0),
+          child: Text(text)
+        )));
+  }
+
+  populatedSelectedAnswers(){
+    for(var i=0;i<optionsArr.length;i++){
+      if(widget.answer_values != null && widget.answer_values.length >= 0){
+        if(widget.answer_values.indexOf(optionsArr[i]) >= 0){
+          setState(() {
+            widget.answers[i] = true;
+          });
+        }
+      }
+    }
   }
 
   ListView _buildList(context) {
@@ -42,24 +69,31 @@ class _RatingChoicePageState extends State<RatingChoiceComponent> {
                   children: <Widget>[
                     InkWell(
                       onTap: () {
-                        setState(() {
-                          widget.answers[index] = !widget.answers[index];
-                          if(widget.q_type == "single"){
-                            print("Single choice");
-                            if(widget.answers[index] == true){
-                              for(var k=0;k<widget.answers.length;k++){
-                                if(k != index){
-                                  widget.answers[k] = false;
+                        if(disabled != null && disabled == false){
+                            setState(() {
+                            widget.answers[index] = !widget.answers[index];
+                            if(widget.q_type == "single"){
+                              print("Single choice");
+                              if(widget.answers[index] == true){
+                                for(var k=0;k<widget.answers.length;k++){
+                                  if(k != index){
+                                    widget.answers[k] = false;
+                                  }
                                 }
                               }
                             }
-                          }
-                          else{
-                            print("Multiple choice");
-                          }
-                          
-                          print(widget.answers);
-                        });
+                            else{
+                              print("Multiple choice");
+                            }
+                            
+                            print(widget.answers);
+                          });
+                        }
+                        else{
+                          print("Disabled");
+                          _showSnackBar("This is a completed assessment!");
+                        }
+                        
                       },
                       child: Container(
                         width: 30.0,
@@ -143,7 +177,12 @@ class _RatingChoicePageState extends State<RatingChoiceComponent> {
                 height: (optionsLength * 80).ceilToDouble(),
                 padding: EdgeInsets.only(top: 10.0),
                 child: _buildList(context)
-              )
+              ),
+              // (disabled == true) ? Container(
+              //   padding: EdgeInsets.only(top: 15.0),
+              //   width: screenSize.width * 0.83,
+              //   child: Text((widget.answer_values != null && widget.answer_values.length >=0) ? ("Selected answers: " + widget.answer_values.join(", ")) : "" , style: questionStyle, maxLines: null, softWrap: true)
+              // ) : Container()
           ],
         )
        

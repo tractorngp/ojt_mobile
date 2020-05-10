@@ -67,6 +67,7 @@ class UserHomePageState extends State<UserHomePage> with SingleTickerProviderSta
     _tabController = new TabController(vsync: this, length: 2, initialIndex: _currentIndex);
     loadMoreDone = true;
     isDataLoading = false;
+    partialLoad = false;
     initTheView();
   }
 
@@ -92,16 +93,21 @@ class UserHomePageState extends State<UserHomePage> with SingleTickerProviderSta
 
 
   fetchOJTsCount() async{
+    if(partialLoad == false)
     showLoader();
+
     api.fetchOJTsCount(user.tokenId).then((dynamic result){
       setState(() {
         filteredPendingOJTsCount = (result.data != null && result.data['pending'] != null) ? result.data['pending'] : 0;
         filteredTotalOJTsCount = (result.data != null && result.data['total'] != null) ? result.data['total'] : 0;
       });
+      if(partialLoad == false)
       dismissLoader();
+
       getData();
     }, onError: (err){
       print("Error");
+      if(partialLoad == false)
       dismissLoader();
     });
   }
@@ -536,6 +542,7 @@ class UserHomePageState extends State<UserHomePage> with SingleTickerProviderSta
                                                                 settings: RouteSettings(name: "/takeOJT"),
                                                                 builder: (context) => TakeOJTsPage(title: filteredPendingOJTs[index].ojt_name, assessment: filteredPendingOJTs[index], assessmentFinish: (){
                                                                   print("OJT finished");
+                                                                  partialLoad = true;
                                                                   initTheView();
                                                                 }),
                                                               ),
@@ -637,7 +644,17 @@ class UserHomePageState extends State<UserHomePage> with SingleTickerProviderSta
                                                       else{
                                                         return new GestureDetector( 
                                                             onTap: () {
-                                                              print("Here I'm! " + index.toString()) ;
+                                                              print("Here I'm! All OJT's" + index.toString()) ;
+                                                              Navigator.push(
+                                                              context,
+                                                              MaterialPageRoute(
+                                                                settings: RouteSettings(name: "/takeOJT"),
+                                                                builder: (context) => TakeOJTsPage(title: filteredAllOJTs[index].ojt_name, assessment: filteredAllOJTs[index], assessmentFinish: (){
+                                                                  print("OJT finished");
+                                                                  initTheView();
+                                                                }),
+                                                              ),
+                                                            );
                                                             },
                                                             child: AllOJTsCard(filteredAllOJTs[index]));
                                                       }

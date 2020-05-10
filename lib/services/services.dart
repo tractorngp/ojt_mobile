@@ -27,7 +27,8 @@ class RestDatasource {
           DocumentSnapshot postSnapshot = await tx.get(documentReference);
           var newData = {
             'status': 'completed',
-            'dateTime_completed': DateTime.now().toUtc().toString()
+            'dateTime_completed': DateTime.now().toUtc().toString(),
+            'questions': questions
           };
           if(postSnapshot.exists){
             await tx.update(documentReference, newData).catchError((e) {

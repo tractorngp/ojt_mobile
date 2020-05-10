@@ -59,8 +59,7 @@ flutter:
    - assets/tractor.png
    - assets/completed.png
    - assets/failed.png
-   - assets/image1.png
-   - assets/image2.png
+   - assets/loading.gif
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware.

@@ -36,6 +36,8 @@ class _TakeOJTsPageState extends State<TakeOJTsPage>{
   var global_index = 0;
   var prevIndex = 0;
   var currentIndex = 0;
+  var assessmentType = "completed";
+  var isAssessmentCompleted = false;
   
 
   @override
@@ -44,6 +46,8 @@ class _TakeOJTsPageState extends State<TakeOJTsPage>{
     getUser();
     assessmentQs = widget.assessment.questions;
     images = widget.assessment.images;
+    assessmentType = widget.assessment.status;
+    isAssessmentCompleted = (assessmentType != null && assessmentType == 'completed') ? true : false;
     initializeAnswers();
   }
 
@@ -63,7 +67,6 @@ class _TakeOJTsPageState extends State<TakeOJTsPage>{
   }
 
   processAnswerValues(){
-    showLoader();
     var assessmentQsCopy = json.decode(json.encode(assessmentQs));
     for(var i=0;i<assessmentQsCopy.length;i++){
       var answersArray = [];
@@ -76,7 +79,6 @@ class _TakeOJTsPageState extends State<TakeOJTsPage>{
         assessmentQsCopy[i]['answer_values'] = answersArray;
       }
       else{
-        dismissLoader();
         _showSnackBar("Please answer all questions!");
         return;
       }
@@ -96,7 +98,7 @@ class _TakeOJTsPageState extends State<TakeOJTsPage>{
         break;
       }
     }
-
+    showLoader();
     api.updateAssessmentStatus(widget.assessment.record_id, answersMatch, widget.assessment.no_of_attempts, assessmentQsCopy).then((res){
         print("Status updated");
         dismissLoader();
@@ -147,19 +149,23 @@ class _TakeOJTsPageState extends State<TakeOJTsPage>{
 
 
   void showLoader(){
-    showDialog(
-          barrierDismissible: false,
-          context: context,
-          builder: (BuildContext context) {
-          _loadingContext = context;
-          return Center(
-            child: SpinKitHourGlass(color: whiteColor)
-          );
+    if(context != null){
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) {
+        _loadingContext = context;
+        return Center(
+          child: SpinKitHourGlass(color: whiteColor)
+        );
       });
+    }
   }
 
   void dismissLoader(){
-    Navigator.pop(_loadingContext);
+    if(_loadingContext != null){
+      Navigator.pop(_loadingContext);
+    }
   }
 
   Future<bool> _onWillPop() async{
@@ -193,7 +199,7 @@ class _TakeOJTsPageState extends State<TakeOJTsPage>{
           ),
         ),
         
-        bottomNavigationBar: new BottomAppBar(
+        bottomNavigationBar: isAssessmentCompleted == false ? new BottomAppBar(
           color: appBarColor,
           child: new Container(
             // grey box
@@ -225,11 +231,11 @@ class _TakeOJTsPageState extends State<TakeOJTsPage>{
             width: screenSize.width,
             height: 60.0,
             color: whiteColor,
-          )),
+          )) : BottomAppBar(),
         body: Container(
           height: screenSize.height,
           width: screenSize.width,
-          padding: EdgeInsets.only(top: 0.0, bottom: 0.0, left: 10.0, right: 10.0),
+          padding: EdgeInsets.only(top: 0.0, bottom: 20.0, left: 10.0, right: 10.0),
           color: whiteColor,
           child: _buildList(context)
         )
@@ -243,7 +249,7 @@ class _TakeOJTsPageState extends State<TakeOJTsPage>{
 
     Swiper _buildList(context) {
        return new Swiper(
-        itemCount: (assessmentQs.length + 2),
+        itemCount: (assessmentQs.length + images.length),
         pagination: new SwiperPagination(
           builder: const DotSwiperPaginationBuilder(
             size: 10.0, activeSize: 10.0, space: 5.0, color: Color(0xFFE0E0E0), activeColor: Color.fromRGBO(110, 120, 132, 1.0))
@@ -264,27 +270,30 @@ class _TakeOJTsPageState extends State<TakeOJTsPage>{
           },
           itemBuilder: (BuildContext context, int index) {
             global_index = index;
-            if(index == 0 || index == 1){
+            if(index < images.length){
               return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: <Widget>[
-                    Container(
-                      width: screenSize.width * 0.85,
-                      height: screenSize.height * 0.65,
-                      child: new GestureDetector( 
-                        onTap: () {
-                          print("Here I'm! dialog") ;
-                          showPhotoDialog(index);
-                        },
-                        child: new Image.asset(
-                          'assets/' + images[index],
-                          fit: BoxFit.contain,
+                child: SingleChildScrollView( 
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: <Widget>[
+                      Container(
+                        width: screenSize.width * 0.85,
+                        height: screenSize.height * 0.65,
+                        child: new GestureDetector( 
+                          onTap: () {
+                            print("Here I'm! dialog") ;
+                            showPhotoDialog(index);
+                          },
+                          child: FadeInImage.assetNetwork(
+                            placeholder: 'assets/loading.gif',
+                            image: images[index],
+                            fit: BoxFit.fitWidth
+                          )
                         )
                       )
-                    )
-                  ]
+                    ]
+                  )
                 )
               );
             }
@@ -294,7 +303,7 @@ class _TakeOJTsPageState extends State<TakeOJTsPage>{
                     print("Here I'm! " + (index-2).toString()) ;
                   },
                   child: SingleChildScrollView(
-                    child: RatingChoiceComponent(questionText: assessmentQs[index-2]['question_text'], orderNumber: assessmentQs[index-2]['order_num'], options: assessmentQs[index-2]['options'], answers: assessmentQs[index-2]['answers'], q_type: assessmentQs[index-2]['q_type']),
+                    child: RatingChoiceComponent(questionText: assessmentQs[index-2]['question_text'], orderNumber: assessmentQs[index-2]['order_num'], options: assessmentQs[index-2]['options'], answers: assessmentQs[index-2]['answers'], q_type: assessmentQs[index-2]['q_type'], status: assessmentType, answer_values: assessmentQs[index-2]['answer_values']),
                   )
                   
               ); 
@@ -323,7 +332,7 @@ class _TakeOJTsPageState extends State<TakeOJTsPage>{
                       scrollPhysics: const BouncingScrollPhysics(),
                       builder: (BuildContext context, int photoIndex) {
                           return PhotoViewGalleryPageOptions(
-                              imageProvider: AssetImage('assets/' + images[index]),
+                              imageProvider: NetworkImage(images[index]),
                               initialScale: PhotoViewComputedScale.contained * 1.0,
                             );
                           },

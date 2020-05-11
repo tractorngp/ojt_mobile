@@ -77,6 +77,7 @@ class LoginPageState extends State<LoginPage>
 
   initTheView() async{
     _deviceid = await initDeviceId();
+    getUser();
   }
 
   Future<String> initDeviceId() async {
@@ -279,6 +280,18 @@ class LoginPageState extends State<LoginPage>
   void _showSnackBar(String text) {
     _scaffoldKey.currentState
         .showSnackBar(new SnackBar(content: new Text(text)));
+  }
+
+   Future<Null> getUser() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    var userString = prefs.getString("user");
+    if(userString != null && userString != ""){
+        var val = json.decode(userString);
+        setState(() {
+          user = UserModel.map(val);
+          idCtrl.text = user.tokenId;
+        });
+    }
   }
 
   Future<Null> storeUser() async {

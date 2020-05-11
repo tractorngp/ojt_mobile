@@ -248,8 +248,9 @@ class _TakeOJTsPageState extends State<TakeOJTsPage>{
   
 
     Swiper _buildList(context) {
+      var imgLength = (images != null ? images.length : 0);
        return new Swiper(
-        itemCount: (assessmentQs.length + images.length),
+        itemCount: (assessmentQs.length + imgLength),
         pagination: new SwiperPagination(
           builder: const DotSwiperPaginationBuilder(
             size: 10.0, activeSize: 10.0, space: 5.0, color: Color(0xFFE0E0E0), activeColor: Color.fromRGBO(110, 120, 132, 1.0))
@@ -270,7 +271,7 @@ class _TakeOJTsPageState extends State<TakeOJTsPage>{
           },
           itemBuilder: (BuildContext context, int index) {
             global_index = index;
-            if(index < images.length){
+            if(index < imgLength){
               return Center(
                 child: SingleChildScrollView( 
                   child: Column(
@@ -300,12 +301,11 @@ class _TakeOJTsPageState extends State<TakeOJTsPage>{
             else{
               return new GestureDetector( 
                   onTap: () {
-                    print("Here I'm! " + (index-2).toString()) ;
+                    print("Here I'm! " + (imgLength).toString()) ;
                   },
                   child: SingleChildScrollView(
-                    child: RatingChoiceComponent(questionText: assessmentQs[index-2]['question_text'], orderNumber: assessmentQs[index-2]['order_num'], options: assessmentQs[index-2]['options'], answers: assessmentQs[index-2]['answers'], q_type: assessmentQs[index-2]['q_type'], status: assessmentType, answer_values: assessmentQs[index-2]['answer_values']),
+                    child: RatingChoiceComponent(questionText: assessmentQs[index-imgLength]['question_text'], orderNumber: assessmentQs[index-imgLength]['order_num'], options: assessmentQs[index-imgLength]['options'], answers: assessmentQs[index-imgLength]['answers'], q_type: assessmentQs[index-imgLength]['q_type'], status: assessmentType, answer_values: assessmentQs[index-imgLength]['answer_values']),
                   )
-                  
               ); 
             }
 

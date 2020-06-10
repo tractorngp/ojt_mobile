@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
+import 'package:ojt_app/models/user_model.dart';
 import 'package:ojt_app/services/constants.dart' as Constants;
 
 class RestDatasource {
@@ -87,6 +88,33 @@ class RestDatasource {
         dynamic result = await callable.call(
           <String, dynamic>{
             'user': user,
+          }
+        );
+        return result;
+    } on CloudFunctionsException catch (e) {
+        print('caught firebase functions exception');
+        print(e.code);
+        print(e.message);
+        print(e.details);
+        return e;
+    } catch (e) {
+        print('caught generic exception');
+        print(e);
+        return e;
+    }
+  }
+
+  Future<dynamic> updatePassword(String user, String currPass, String newPass) async{
+    callable = CloudFunctions.instance
+        .getHttpsCallable(functionName: 'updatePassword')
+          ..timeout = const Duration(seconds: 30);
+
+    try {
+        dynamic result = await callable.call(
+          <String, dynamic>{
+            'tokenId': user,
+            'currentPassword': currPass,
+            'newPassword': newPass
           }
         );
         return result;

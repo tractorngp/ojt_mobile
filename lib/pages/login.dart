@@ -20,6 +20,7 @@ import 'dart:io' show Platform;
 import 'package:ojt_app/services/services.dart';
 import 'package:auto_orientation/auto_orientation.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:ojt_app/pages/changePassword.dart';
 
 class LoginPage extends StatefulWidget {
   final String loginType;
@@ -337,13 +338,25 @@ class LoginPageState extends State<LoginPage>
                     setState(() {
                       idCtrl.text = "";
                       pwdCtrl.text = "";
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                          settings: RouteSettings(name: "/userHome"),
-                          builder: (context) => UserHomePage('user')
-                        ),
-                      );
+                      if(user.resetPassword != null && user.resetPassword == true){
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                            settings: RouteSettings(name: "/changePassword"),
+                            builder: (context) => ChangePasswordPage('login', false)
+                          ),
+                        );
+                      }
+                      else{
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                            settings: RouteSettings(name: "/userHome"),
+                            builder: (context) => UserHomePage('user')
+                          ),
+                        );
+                      }
+                      
                     });
                 });
               }
@@ -367,76 +380,3 @@ class LoginPageState extends State<LoginPage>
     }
   }
 }
-
-
-// pushSampleOJTs(){
-  //   var ojtTemplate = {
-  //     "active": true,
-  //     "questions": [
-  //         {
-  //             "question_text": "How are you?",
-  //             "options": ["Good", "Bad", "Ok", "None of the above"],
-  //             "order_num": 1,
-  //             "correct_answers": ["Good", "Ok"]
-  //         },
-  //         {
-  //             "question_text": "How do you like the app?",
-  //             "options": ["Good", "Bad", "Not Great", "Average", "Don't know"],
-  //             "order_num": 2,
-  //             "correct_answers": ["Good"]
-  //         },
-  //         {
-  //             "question_text": "Did you answer above questions?",
-  //             "options": ["Yes", "No"],
-  //             "order_num": 3,
-  //             "correct_answers": ["Yes"]
-  //         }
-
-  //         {
-  //             "question_text": "What do you do?",
-  //             "options": ["Job", "Homemaker", "Who gives a shit"],
-  //             "order_num": 1,
-  //             "correct_answers": ["Who gives a shit"]
-  //         },
-
-  //         {
-  //             "question_text": "What's your age?",
-  //             "options": ["0-10", "10-20", "20-50","Dead"],
-  //             "order_num": 2,
-  //             "correct_answers": ["20-50"]
-  //         },
-  //         {
-  //             "question_text": "Is this the last question?",
-  //             "options": ["Yes", "No"],
-  //             "order_num": 3,
-  //             "correct_answers": ["Yes"]
-  //         }
-
-  //         {
-  //             "question_text": "The answer is yes",
-  //             "options": ["Yes", "No"],
-  //             "order_num": 1,
-  //             "correct_answers": ["Yes"]
-  //         }
-  //         {
-  //             "question_text": "Do you like this app (Hint: Ofcourse you have to!)?",
-  //             "options": ["Yes", "No"],
-  //             "order_num": 1,
-  //             "correct_answers": ["Yes"]
-  //         }
-  //     ],
-  //     "assigned_to": "/users/1115",
-  //     "group_id": "/users/group3",
-  //     "images": ["image1.png", "image2.png"],
-  //     "no_of_attempts": 0,
-  //     "ojt_name": "OJT 4",
-  //     "record_id": "19",
-  //     "status": "assigned"
-  //   };
-
-  //   firestore.collection("assigned_ojts").document('rec19').setData(ojtTemplate).then((result) => {
-  //       print("Document successfully written!")
-  //   }).catchError((error) => {
-  //       print("Error writing document: " + error)
-  //   });
-  // }

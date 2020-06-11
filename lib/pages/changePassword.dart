@@ -132,7 +132,7 @@ class ChangePasswordPageState extends State<ChangePasswordPage> {
                   decoration: new InputDecoration(
                     hintStyle: placeholderStyle,
                     labelStyle: referenceTextStyleSub,
-                    hintText: "Current Password",
+                    hintText: "Temporary Password",
                     enabledBorder: UnderlineInputBorder(      
                       borderSide: BorderSide(color: lightGrey),   
                     ),
